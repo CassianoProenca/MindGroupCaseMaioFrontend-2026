@@ -553,14 +553,23 @@
   font-weight: 700;
 }
 
-.form-error {
-  margin: 0;
-  border: 1px solid #7a272b;
-  background: rgba(240, 68, 68, 0.1);
-  color: #ff7479;
-  padding: 10px 12px;
-  font-size: 0.88rem;
-}
+  .form-error {
+    margin: 0;
+    border: 1px solid #7a272b;
+    background: rgba(240, 68, 68, 0.1);
+    color: #ff7479;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+
+  .form-success {
+    margin: 0;
+    border: 1px solid #1c6b48;
+    background: rgba(31, 185, 117, 0.1);
+    color: #77ddb1;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
 
 .home-hero {
   display: grid;
@@ -1198,11 +1207,17 @@
   gap: 16px;
 }
 
-.avatar-placeholder.large {
-  width: 132px;
-  height: 132px;
-  font-size: 3rem;
-}
+  .avatar-placeholder.large {
+    width: 132px;
+    height: 132px;
+    font-size: 3rem;
+  }
+
+  .profile-avatar-image {
+    width: 132px;
+    height: 132px;
+    object-fit: cover;
+  }
 
 .icon-field {
   display: grid;
