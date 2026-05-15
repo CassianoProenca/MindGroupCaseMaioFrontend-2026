@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { ArticleForm } from "@/components/articles/ArticleForm"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
+import { getApiErrorMessage } from "@/services/api"
 import { createArticle, getArticle, updateArticle } from "@/services/articles"
 import type { Article } from "@/types/api"
 
@@ -28,7 +29,7 @@ export function UpsertArticlePage({ mode }: UpsertArticlePageProps) {
 
     getArticle(id)
       .then(({ article }) => setArticle(article))
-      .catch((error) => setError(error instanceof Error ? error.message : "Nao foi possivel carregar o artigo."))
+      .catch((error) => setError(getApiErrorMessage(error)))
       .finally(() => setIsLoading(false))
   }, [id, mode])
 
@@ -45,7 +46,7 @@ export function UpsertArticlePage({ mode }: UpsertArticlePageProps) {
         mode === "create" ? await createArticle(formData, token) : await updateArticle(id ?? "", formData, token)
       navigate(`/artigos/${response.article.id}`)
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Nao foi possivel salvar o artigo.")
+      setError(getApiErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }

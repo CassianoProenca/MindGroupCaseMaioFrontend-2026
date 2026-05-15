@@ -1,30 +1,41 @@
-import type { AuthResponse, User } from "@/types/api"
+import {
+  authResponseSchema,
+  loginPayloadSchema,
+  meResponseSchema,
+  registerPayloadSchema,
+  type LoginPayload,
+  type RegisterPayload,
+} from "@/types/api"
 
-import { apiRequest } from "./api"
+import { api, authConfig, normalizeAxiosError, parseApiResponse } from "./api"
 
-export type LoginPayload = {
-  email: string
-  password: string
+export type { LoginPayload, RegisterPayload }
+
+export async function login(payload: LoginPayload) {
+  try {
+    const validatedPayload = loginPayloadSchema.parse(payload)
+    const response = await api.post("/auth/login", validatedPayload)
+    return parseApiResponse(authResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }
 
-export type RegisterPayload = LoginPayload & {
-  name: string
+export async function register(payload: RegisterPayload) {
+  try {
+    const validatedPayload = registerPayloadSchema.parse(payload)
+    const response = await api.post("/auth/register", validatedPayload)
+    return parseApiResponse(authResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }
 
-export function login(payload: LoginPayload) {
-  return apiRequest<AuthResponse>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })
-}
-
-export function register(payload: RegisterPayload) {
-  return apiRequest<AuthResponse>("/auth/register", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })
-}
-
-export function getMe(token: string) {
-  return apiRequest<{ user: User }>("/auth/me", { token })
+export async function getMe(token: string) {
+  try {
+    const response = await api.get("/auth/me", authConfig(token))
+    return parseApiResponse(meResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }

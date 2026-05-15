@@ -1,34 +1,72 @@
-import type { ArticleResponse, ArticlesResponse } from "@/types/api"
+import {
+  articlePayloadSchema,
+  articleResponseSchema,
+  articlesResponseSchema,
+} from "@/types/api"
 
-import { apiRequest } from "./api"
+import { api, authConfig, normalizeAxiosError, parseApiResponse } from "./api"
 
-export function listArticles() {
-  return apiRequest<ArticlesResponse>("/articles")
+function validateArticleFormData(formData: FormData, requireBanner: boolean) {
+  const banner = formData.get("banner")
+  const payload = {
+    title: String(formData.get("title") ?? ""),
+    content: String(formData.get("content") ?? ""),
+    banner: banner instanceof File && banner.size > 0 ? banner : undefined,
+  }
+
+  const parsed = articlePayloadSchema.safeParse(payload)
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Dados do artigo invalidos.")
+  }
+
+  if (requireBanner && !parsed.data.banner) {
+    throw new Error("Banner do artigo e obrigatorio.")
+  }
 }
 
-export function getArticle(id: string | number) {
-  return apiRequest<ArticleResponse>(`/articles/${id}`)
+export async function listArticles() {
+  try {
+    const response = await api.get("/articles")
+    return parseApiResponse(articlesResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }
 
-export function createArticle(formData: FormData, token: string) {
-  return apiRequest<ArticleResponse>("/articles", {
-    method: "POST",
-    body: formData,
-    token,
-  })
+export async function getArticle(id: string | number) {
+  try {
+    const response = await api.get(`/articles/${id}`)
+    return parseApiResponse(articleResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }
 
-export function updateArticle(id: string | number, formData: FormData, token: string) {
-  return apiRequest<ArticleResponse>(`/articles/${id}`, {
-    method: "PUT",
-    body: formData,
-    token,
-  })
+export async function createArticle(formData: FormData, token: string) {
+  try {
+    validateArticleFormData(formData, true)
+    const response = await api.post("/articles", formData, authConfig(token))
+    return parseApiResponse(articleResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }
 
-export function deleteArticle(id: string | number, token: string) {
-  return apiRequest<void>(`/articles/${id}`, {
-    method: "DELETE",
-    token,
-  })
+export async function updateArticle(id: string | number, formData: FormData, token: string) {
+  try {
+    validateArticleFormData(formData, false)
+    const response = await api.put(`/articles/${id}`, formData, authConfig(token))
+    return parseApiResponse(articleResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function deleteArticle(id: string | number, token: string) {
+  try {
+    await api.delete(`/articles/${id}`, authConfig(token))
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
 }

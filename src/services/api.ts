@@ -1,12 +1,16 @@
-import type { ApiErrorResponse } from "@/types/api"
+import axios, { AxiosError, type AxiosRequestConfig } from "axios"
+import type { z } from "zod"
+import { ZodError } from "zod"
+
+import { apiErrorResponseSchema } from "@/types/api"
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333"
 
 export const apiUrl = API_URL
 
-type RequestOptions = RequestInit & {
-  token?: string | null
-}
+export const api = axios.create({
+  baseURL: API_URL,
+})
 
 export class ApiError extends Error {
   status: number
@@ -17,32 +21,64 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}) {
-  const headers = new Headers(options.headers)
+export function parseApiResponse<TSchema extends z.ZodType>(schema: TSchema, data: unknown) {
+  const parsed = schema.safeParse(data)
 
-  if (!(options.body instanceof FormData) && options.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json")
+  if (!parsed.success) {
+    throw new ApiError("A API retornou dados em um formato inesperado.", 500)
   }
 
-  if (options.token) {
-    headers.set("Authorization", `Bearer ${options.token}`)
+  return parsed.data as z.infer<TSchema>
+}
+
+export function getApiErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    return error.message
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  })
-
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as ApiErrorResponse
-    throw new ApiError(payload.message ?? "Nao foi possivel concluir a acao.", response.status)
+  if (error instanceof AxiosError) {
+    const payload = apiErrorResponseSchema.safeParse(error.response?.data)
+    return payload.data?.message ?? "Nao foi possivel concluir a acao."
   }
 
-  if (response.status === 204) {
-    return undefined as T
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? "Dados invalidos."
   }
 
-  return (await response.json()) as T
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return "Nao foi possivel concluir a acao."
+}
+
+export function normalizeAxiosError(error: unknown): never {
+  if (error instanceof ApiError) {
+    throw error
+  }
+
+  if (error instanceof AxiosError) {
+    const payload = apiErrorResponseSchema.safeParse(error.response?.data)
+    throw new ApiError(payload.data?.message ?? "Nao foi possivel concluir a acao.", error.response?.status ?? 500)
+  }
+
+  if (error instanceof ZodError) {
+    throw new ApiError(error.issues[0]?.message ?? "Dados invalidos.", 400)
+  }
+
+  if (error instanceof Error) {
+    throw new ApiError(error.message, 400)
+  }
+
+  throw new ApiError("Nao foi possivel concluir a acao.", 500)
+}
+
+export function authConfig(token: string): AxiosRequestConfig {
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
 }
 
 export function getBannerUrl(path: string | null) {

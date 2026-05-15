@@ -4,6 +4,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import { AuthCard } from "@/components/auth/AuthCard"
 import { useAuth } from "@/context/AuthContext"
+import { getApiErrorMessage } from "@/services/api"
 
 type AuthPageProps = {
   mode: "login" | "register"
@@ -51,7 +52,7 @@ export function AuthPage({ mode }: AuthPageProps) {
 
       navigate(from, { replace: true })
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Nao foi possivel autenticar.")
+      setError(getApiErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }

@@ -8,6 +8,8 @@ Frontend em React, TypeScript e Vite para o case de estagio da Mind Group.
 - TypeScript
 - Vite
 - React Router
+- Axios
+- Zod
 - Tailwind CSS
 - lucide-react
 
@@ -64,6 +66,8 @@ O frontend consome:
 - `PUT /articles/:id`
 - `DELETE /articles/:id`
 - `GET /articles/:id/banner`
+
+As respostas e payloads principais sao validados com Zod na camada de services antes de serem usados pela interface. As chamadas HTTP usam uma instancia centralizada do Axios configurada por `VITE_API_URL`.
 
 ## Observacoes
 
