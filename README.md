@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# Mind Blog Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend em React, TypeScript e Vite para o case de estagio da Mind Group.
 
-Currently, two official plugins are available:
+## Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React
+- TypeScript
+- Vite
+- React Router
+- Tailwind CSS
+- lucide-react
 
-## React Compiler
+## Como rodar
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Instale as dependencias:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Copie o arquivo de ambiente:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
 ```
+
+3. Garanta que o backend esteja rodando em `http://localhost:3333`.
+
+4. Inicie o frontend:
+
+```bash
+npm run dev
+```
+
+## Rotas
+
+- `/` - home
+- `/artigos` - listagem de artigos com grid/lista e busca
+- `/artigos/:id` - detalhe do artigo
+- `/login` - login
+- `/cadastro` - cadastro
+- `/dashboard` - area protegida
+- `/artigos/novo` - criacao de artigo
+- `/artigos/:id/editar` - edicao de artigo
+- `/configuracoes` - tela visual de configuracoes
+
+## Integracao com backend
+
+Configure a URL da API em `.env`:
+
+```bash
+VITE_API_URL=http://localhost:3333
+```
+
+O frontend consome:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+- `GET /articles`
+- `GET /articles/:id`
+- `POST /articles`
+- `PUT /articles/:id`
+- `DELETE /articles/:id`
+- `GET /articles/:id/banner`
+
+## Observacoes
+
+Comentarios, curtidas, visualizacoes, tags, categorias, metricas e configuracoes de perfil aparecem como UI temporaria porque ainda nao existem no backend. O CRUD minimo de artigos, autenticacao e upload de banner estao integrados.
