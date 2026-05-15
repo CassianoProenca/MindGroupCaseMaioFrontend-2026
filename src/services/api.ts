@@ -77,6 +77,15 @@ export function authConfig(token: string): AxiosRequestConfig {
   return {
     headers: {
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  }
+}
+
+export function authConfigWithFile(token: string): AxiosRequestConfig {
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
   }
 }
