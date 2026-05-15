@@ -1,0 +1,6 @@
+<svg width="900" height="520" viewBox="0 0 900 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="520" fill="#FFA6AE"/>
+  <path d="M310 520L900 140V520H310Z" fill="#C6DFFF"/>
+  <text x="140" y="220" fill="#050505" font-family="Georgia, serif" font-size="116" font-weight="700">Lorem</text>
+  <text x="140" y="340" fill="#050505" font-family="Georgia, serif" font-size="116" font-weight="700">ipsum</text>
+</svg>
