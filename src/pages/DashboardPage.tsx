@@ -1,40 +1,65 @@
-import { useMemo, useState } from "react"
-import { Edit3, FileText, FolderTree, Heart, MessageSquare, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { BookOpen, Edit3, Eye, FileText, FolderTree, Heart, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { DeleteArticleModal } from "@/components/articles/DeleteArticleModal"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
-import { useArticles } from "@/hooks/useArticles"
-import { formatDate, getArticleImage, getArticleImageFallback, getExcerpt, getReadingTime } from "@/lib/format"
+import { formatDate, formatDuration, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
 import { deleteArticle } from "@/services/articles"
-import type { Article } from "@/types/api"
+import { getApiErrorMessage } from "@/services/api"
+import { getMyDashboardMetrics } from "@/services/profile"
+import type { DashboardMetricsResponse } from "@/types/api"
+
+type DashboardArticle = DashboardMetricsResponse["metrics"]["articleMetrics"][number]
 
 export function DashboardPage() {
   const { user, token } = useAuth()
   const [page, setPage] = useState(1)
-  const { articles, meta, isLoading } = useArticles({ page, perPage: 4 })
-  const [articleToDelete, setArticleToDelete] = useState<Article | null>(null)
+  const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetricsResponse["metrics"] | null>(null)
+  const [metricsError, setMetricsError] = useState("")
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(Boolean(token))
+  const [articleToDelete, setArticleToDelete] = useState<DashboardArticle | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deletedArticleIds, setDeletedArticleIds] = useState<number[]>([])
 
-  const dashboardArticles = articles.filter((article) => !deletedArticleIds.includes(article.id))
+  const dashboardArticles = useMemo(() => {
+    return dashboardMetrics?.articleMetrics.filter((article) => !deletedArticleIds.includes(article.id)) ?? []
+  }, [dashboardMetrics, deletedArticleIds])
+  const dashboardTotalPages = Math.max(1, Math.ceil(dashboardArticles.length / 4))
+  const visibleDashboardArticles = dashboardArticles.slice((page - 1) * 4, page * 4)
+
+  useEffect(() => {
+    if (!token) {
+      return
+    }
+
+    setIsLoadingMetrics(true)
+    getMyDashboardMetrics(token)
+      .then(({ metrics }) => {
+        setDashboardMetrics(metrics)
+        setMetricsError("")
+        setPage(1)
+      })
+      .catch((error) => setMetricsError(getApiErrorMessage(error)))
+      .finally(() => setIsLoadingMetrics(false))
+  }, [token, deletedArticleIds])
 
   const stats = useMemo(() => {
-    const totalViews = dashboardArticles.reduce((total, article) => total + article.viewsCount, 0)
-    const totalLikes = dashboardArticles.reduce((total, article) => total + article.likesCount, 0)
-    const averageReadingTime = Math.round(
-      dashboardArticles.reduce((total, article) => total + getReadingTime(article.content), 0) /
-        Math.max(1, dashboardArticles.length),
-    )
+    const totals = dashboardMetrics?.totals
 
     return [
-      { label: "Total de Artigos", value: dashboardArticles.length, icon: FileText },
-      { label: "Engajamento", value: totalViews + totalLikes, icon: MessageSquare },
-      { label: "Curtidas", value: totalLikes, icon: Heart },
-      { label: "Tempo medio de leitura", value: `${averageReadingTime} min`, icon: TrendingUp },
+      { label: "Total de Artigos", value: totals?.articles ?? 0, icon: FileText },
+      { label: "Views", value: totals?.views ?? 0, icon: Eye },
+      { label: "Curtidas", value: totals?.likes ?? 0, icon: Heart },
+      { label: "Leituras", value: totals?.reads ?? 0, icon: BookOpen },
+      { label: "Tempo medio real", value: formatDuration(totals?.averageReadSeconds ?? 0), icon: TrendingUp },
     ]
-  }, [dashboardArticles])
+  }, [dashboardMetrics])
+
+  function getArticleMetrics(articleId: number) {
+    return dashboardMetrics?.articleMetrics.find((article) => article.id === articleId)
+  }
 
   async function handleDelete() {
     if (!articleToDelete || !token) {
@@ -76,27 +101,31 @@ export function DashboardPage() {
       </div>
 
       <div className="stats-grid">
-        {stats.map((item) => {
-          const Icon = item.icon
-          return (
-            <article className="stat-card" key={item.label}>
-              <div>
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-              </div>
-              <Icon size={24} />
-            </article>
-          )
-        })}
+        {isLoadingMetrics ? <StateBlock title="Carregando metricas" /> : null}
+        {metricsError ? <p className="form-error">{metricsError}</p> : null}
+        {!isLoadingMetrics
+          ? stats.map((item) => {
+              const Icon = item.icon
+              return (
+                <article className="stat-card" key={item.label}>
+                  <div>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                  <Icon size={24} />
+                </article>
+              )
+            })
+          : null}
       </div>
 
       <div className="dashboard-grid">
         <section className="surface-panel dashboard-list-panel">
           <h2>Meus Artigos</h2>
-          {isLoading ? <StateBlock title="Carregando artigos" /> : null}
-          {!isLoading && dashboardArticles.length === 0 ? <StateBlock title="Nenhum artigo publicado" /> : null}
-          {!isLoading
-            ? dashboardArticles.map((article) => (
+          {isLoadingMetrics ? <StateBlock title="Carregando artigos" /> : null}
+          {!isLoadingMetrics && dashboardArticles.length === 0 ? <StateBlock title="Nenhum artigo publicado" /> : null}
+          {!isLoadingMetrics
+            ? visibleDashboardArticles.map((article) => (
                 <article className="dashboard-article" key={article.id}>
                   <img
                     src={getArticleImage(article.id, article.bannerUrl)}
@@ -106,11 +135,21 @@ export function DashboardPage() {
                     }}
                   />
                   <div>
-                    <h3>{article.title}</h3>
-                    <p>{getExcerpt(article.summary || article.content, 85)}</p>
-                    <span>
-                      {formatDate(article.publishedAt)} - {article.viewsCount} views - {article.likesCount} likes
-                    </span>
+                    {(() => {
+                      const articleMetrics = getArticleMetrics(article.id)
+                      return (
+                        <>
+                          <h3>{article.title}</h3>
+                          <p>{getExcerpt(article.summary || "Sem resumo cadastrado.", 85)}</p>
+                          <span>
+                            {formatDate(article.publishedAt)} - {articleMetrics?.viewsCount ?? article.viewsCount} views -{" "}
+                            {articleMetrics?.likesCount ?? article.likesCount} likes -{" "}
+                            {articleMetrics?.readsCount ?? 0} leituras - media real{" "}
+                            {formatDuration(articleMetrics?.averageReadSeconds ?? 0)}
+                          </span>
+                        </>
+                      )
+                    })()}
                   </div>
                   <div className="dashboard-row-actions">
                     <Link to={`/artigos/${article.id}/editar`} className="button-secondary">
@@ -125,18 +164,18 @@ export function DashboardPage() {
                 </article>
               ))
             : null}
-          {!isLoading && meta.totalPages > 1 ? (
+          {!isLoadingMetrics && dashboardTotalPages > 1 ? (
             <div className="pagination-row dashboard-pagination">
               <button type="button" className="button-secondary" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
                 Anterior
               </button>
               <span>
-                Pagina {meta.page} de {meta.totalPages}
+                Pagina {page} de {dashboardTotalPages}
               </span>
               <button
                 type="button"
                 className="button-secondary"
-                disabled={page >= meta.totalPages}
+                disabled={page >= dashboardTotalPages}
                 onClick={() => setPage((current) => current + 1)}
               >
                 Proxima
@@ -147,16 +186,17 @@ export function DashboardPage() {
 
         <aside className="surface-panel recent-activity">
           <h2>Atividade Recente</h2>
-          {dashboardArticles.slice(0, 3).map((article) => (
-            <article key={article.id}>
-              <div className="avatar-placeholder">{article.author.name.charAt(0).toUpperCase()}</div>
+          {dashboardMetrics?.recentActivity.map((activity) => (
+            <article key={activity.id}>
+              <div className="avatar-placeholder">{(user?.name ?? "A").charAt(0).toUpperCase()}</div>
               <p>
-                <strong>{article.author.name}</strong> publicou {article.title}
-                <span>{article.category ?? "Sem categoria"} - {formatDate(article.updatedAt)}</span>
+                <strong>{user?.name ?? "Autor"}</strong> {activity.type === "published" ? "publicou" : "atualizou"}{" "}
+                {activity.title}
+                <span>{activity.category ?? "Sem categoria"} - {formatDate(activity.updatedAt)}</span>
               </p>
             </article>
           ))}
-          {!isLoading && dashboardArticles.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
+          {!isLoadingMetrics && dashboardMetrics?.recentActivity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
         </aside>
       </div>
 

@@ -1,8 +1,6 @@
 import { Modal } from "@/components/ui/Modal"
-import type { Article } from "@/types/api"
-
 type DeleteArticleModalProps = {
-  article: Article | null
+  article: { id: number; title: string } | null
   isDeleting: boolean
   onClose: () => void
   onConfirm: () => void

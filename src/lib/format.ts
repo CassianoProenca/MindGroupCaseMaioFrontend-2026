@@ -9,8 +9,31 @@ export function formatDate(value: string) {
 }
 
 export function getReadingTime(content: string) {
-  const words = content.trim().split(/\s+/).filter(Boolean).length
-  return Math.max(1, Math.ceil(words / 180))
+  const images = (content.match(/!\[[^\]]*]\([^)]+\)/g)?.length ?? 0) + (content.match(/<img\b[^>]*>/gi)?.length ?? 0)
+  const plain = content
+    .replace(/!\[[^\]]*]\([^)]+\)/g, " ")
+    .replace(/<img\b[^>]*>/gi, " ")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]+`/g, " ")
+    .replace(/[#>*_~[\]()]/g, " ")
+  const words = plain.trim().split(/\s+/).filter(Boolean).length
+  const seconds = (words / 220) * 60 + images * 12
+  return Math.max(1, Math.ceil(seconds / 60))
+}
+
+export function formatDuration(seconds: number) {
+  if (seconds <= 0) {
+    return "0s"
+  }
+
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+
+  if (minutes === 0) {
+    return `${remainingSeconds}s`
+  }
+
+  return remainingSeconds > 0 ? `${minutes}min ${remainingSeconds}s` : `${minutes}min`
 }
 
 export function getExcerpt(content: string, length = 145) {

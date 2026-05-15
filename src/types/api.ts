@@ -28,6 +28,7 @@ export const articleSchema = z.object({
   bannerUrl: z.string().nullable(),
   viewsCount: z.number().optional().default(0),
   likesCount: z.number().optional().default(0),
+  readingTimeMinutes: z.number().optional(),
   publishedAt: z.string(),
   updatedAt: z.string(),
   author: userSchema,
@@ -102,6 +103,64 @@ export const profileResponseSchema = z.object({
   profile: profileSchema,
 })
 
+export const dashboardMetricsSchema = z.object({
+  metrics: z.object({
+    totals: z.object({
+      articles: z.number(),
+      views: z.number(),
+      likes: z.number(),
+      reads: z.number(),
+      totalReadSeconds: z.number(),
+      engagement: z.number(),
+      averageReadSeconds: z.number(),
+      averageReadingTimeMinutes: z.number(),
+    }),
+    articleMetrics: z.array(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+        summary: z.string().nullable().optional(),
+        bannerUrl: z.string().nullable(),
+        viewsCount: z.number(),
+        likesCount: z.number(),
+        readsCount: z.number(),
+        totalReadSeconds: z.number(),
+        averageReadSeconds: z.number(),
+        readingTimeMinutes: z.number(),
+        category: z.string().nullable(),
+        publishedAt: z.string(),
+        updatedAt: z.string(),
+      }),
+    ),
+    topArticles: z.array(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+        summary: z.string().nullable().optional(),
+        bannerUrl: z.string().nullable(),
+        viewsCount: z.number(),
+        likesCount: z.number(),
+        readsCount: z.number(),
+        totalReadSeconds: z.number(),
+        averageReadSeconds: z.number(),
+        readingTimeMinutes: z.number(),
+        category: z.string().nullable(),
+        publishedAt: z.string(),
+        updatedAt: z.string(),
+      }),
+    ),
+    recentActivity: z.array(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+        category: z.string().nullable(),
+        updatedAt: z.string(),
+        type: z.enum(["published", "updated"]),
+      }),
+    ),
+  }),
+})
+
 export const engagementResponseSchema = z.object({
   article: z.object({
     id: z.number(),
@@ -155,6 +214,7 @@ export type CategoryResponse = z.infer<typeof categoryResponseSchema>
 export type CommentResponse = z.infer<typeof commentResponseSchema>
 export type Profile = z.infer<typeof profileSchema>
 export type ProfileResponse = z.infer<typeof profileResponseSchema>
+export type DashboardMetricsResponse = z.infer<typeof dashboardMetricsSchema>
 export type EngagementResponse = z.infer<typeof engagementResponseSchema>
 export type LoginPayload = z.infer<typeof loginPayloadSchema>
 export type RegisterPayload = z.infer<typeof registerPayloadSchema>

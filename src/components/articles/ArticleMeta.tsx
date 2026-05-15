@@ -13,7 +13,7 @@ export function ArticleMeta({ article, compact = false }: ArticleMetaProps) {
     <div className={compact ? "article-meta compact" : "article-meta"}>
       <span>
         <Clock3 size={14} />
-        {getReadingTime(article.content)}min
+        {article.readingTimeMinutes ?? getReadingTime(article.content)}min
       </span>
       <span>
         <Eye size={14} />
