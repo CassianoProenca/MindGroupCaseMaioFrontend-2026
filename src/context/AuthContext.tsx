@@ -15,6 +15,7 @@ type AuthContextValue = {
   login: (payload: authService.LoginPayload) => Promise<void>
   register: (payload: authService.RegisterPayload) => Promise<void>
   logout: () => void
+  updateUser: (nextUser: User) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -84,6 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
         window.localStorage.removeItem(TOKEN_KEY)
         window.localStorage.removeItem(USER_KEY)
+      },
+      updateUser: (nextUser) => {
+        setUser(nextUser)
+        window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
       },
     }),
     [isLoading, token, user],

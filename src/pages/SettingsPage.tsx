@@ -12,7 +12,7 @@ import { getMyProfile, updateMyProfile } from "@/services/profile"
 import type { Profile } from "@/types/api"
 
 export function SettingsPage() {
-  const { user, token } = useAuth()
+  const { user, token, updateUser } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [name, setName] = useState(user?.name ?? "")
   const [bio, setBio] = useState(user?.bio ?? "")
@@ -52,6 +52,7 @@ export function SettingsPage() {
     try {
       const response = await updateMyProfile({ name, bio, avatarUrl }, token)
       setProfile(response.profile)
+      updateUser(response.profile)
       setSuccess("Perfil atualizado com sucesso.")
     } catch (error) {
       setError(getApiErrorMessage(error))
