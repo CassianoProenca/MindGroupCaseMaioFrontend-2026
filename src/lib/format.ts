@@ -1,3 +1,5 @@
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333"
+
 export function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {
     day: "numeric",
@@ -17,5 +19,17 @@ export function getExcerpt(content: string, length = 145) {
 }
 
 export function getArticleImage(articleId: number, bannerUrl: string | null) {
-  return bannerUrl ?? `/placeholder-article.svg?id=${articleId}`
+  if (!bannerUrl) {
+    return `/placeholder-article.svg?id=${articleId}`
+  }
+
+  if (/^(https?:)?\/\//.test(bannerUrl) || bannerUrl.startsWith("data:") || bannerUrl.startsWith("blob:")) {
+    return bannerUrl
+  }
+
+  return new URL(bannerUrl, API_URL).toString()
+}
+
+export function getArticleImageFallback(articleId: number) {
+  return `/placeholder-article.svg?id=${articleId}`
 }
