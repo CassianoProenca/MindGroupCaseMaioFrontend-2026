@@ -1,11 +1,12 @@
 import type { FormEvent } from "react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 
 import { Badge } from "@/components/ui/Badge"
 import { TextArea, TextInput } from "@/components/ui/FormField"
 import { getArticleImage, getReadingTime } from "@/lib/format"
-import type { Article } from "@/types/api"
+import { listCategories } from "@/services/articles"
+import type { Article, Category } from "@/types/api"
 
 type ArticleFormProps = {
   article?: Article | null
@@ -22,6 +23,13 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
   const [tags, setTags] = useState(article?.tags?.join(", ") ?? "")
   const [content, setContent] = useState(article?.content ?? "")
   const [file, setFile] = useState<File | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    listCategories({ perPage: 50 })
+      .then(({ categories }) => setCategories(categories))
+      .catch(() => setCategories([]))
+  }, [])
 
   const previewUrl = useMemo(() => {
     if (file) {
@@ -64,11 +72,12 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
       <label className="field-shell">
         <span>Categoria *</span>
         <select className="text-field" name="category" value={category} onChange={(event) => setCategory(event.target.value)}>
-          <option>Desenvolvimento web</option>
-          <option>Inteligencia Artificial</option>
-          <option>Backend</option>
-          <option>Frontend</option>
-          <option>DevOps</option>
+          {[category, ...categories.map((item) => item.name), "Desenvolvimento web", "Inteligencia Artificial", "Backend", "Frontend", "DevOps"]
+            .filter(Boolean)
+            .filter((item, index, all) => all.indexOf(item) === index)
+            .map((item) => (
+              <option key={item}>{item}</option>
+            ))}
         </select>
       </label>
       <label className="field-shell">

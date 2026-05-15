@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Settings } from "lucide-react"
+import { FolderTree, LayoutDashboard, LogOut, Settings } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { useAuth } from "@/context/AuthContext"
@@ -26,6 +26,10 @@ export function UserMenu() {
         <Link to="/dashboard">
           <LayoutDashboard size={16} />
           Dashboard
+        </Link>
+        <Link to="/categorias">
+          <FolderTree size={16} />
+          Categorias
         </Link>
         <Link to="/configuracoes">
           <Settings size={16} />

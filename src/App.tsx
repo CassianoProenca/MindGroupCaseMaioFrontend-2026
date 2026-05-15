@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
 import { ArticleDetailPage } from "@/pages/ArticleDetailPage"
 import { ArticlesPage } from "@/pages/ArticlesPage"
 import { AuthPage } from "@/pages/AuthPage"
+import { CategoriesPage } from "@/pages/CategoriesPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { HomePage } from "@/pages/HomePage"
 import { SettingsPage } from "@/pages/SettingsPage"
@@ -24,6 +25,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="categorias"
+          element={
+            <ProtectedRoute>
+              <CategoriesPage />
             </ProtectedRoute>
           }
         />
