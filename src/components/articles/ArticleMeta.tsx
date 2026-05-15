@@ -17,10 +17,11 @@ export function ArticleMeta({ article, compact = false }: ArticleMetaProps) {
       </span>
       <span>
         <Eye size={14} />
-        122
+        {article.viewsCount}
       </span>
       <span>
-        <Heart size={14} />1
+        <Heart size={14} />
+        {article.likesCount}
       </span>
       {!compact ? (
         <span>

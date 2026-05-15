@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { ArrowLeft, Bookmark, Heart, Share2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
@@ -8,8 +8,16 @@ import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { mockArticles } from "@/data/mockArticles"
 import { formatDate, getArticleImage } from "@/lib/format"
-import { getArticle } from "@/services/articles"
-import type { Article } from "@/types/api"
+import { getApiErrorMessage } from "@/services/api"
+import {
+  createComment,
+  getArticle,
+  likeArticle,
+  listComments,
+  registerArticleView,
+  unlikeArticle,
+} from "@/services/articles"
+import type { Article, Comment } from "@/types/api"
 
 function renderContent(content: string) {
   return content.split("\n").map((line, index) => {
@@ -27,38 +35,103 @@ function renderContent(content: string) {
 
 export function ArticleDetailPage() {
   const { id } = useParams()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, token } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLiked, setIsLiked] = useState(false)
+  const [commentError, setCommentError] = useState("")
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
 
   useEffect(() => {
     if (!id) {
       return
     }
 
-    getArticle(id)
-      .then(({ article }) => setArticle(article))
-      .catch(() => setArticle(mockArticles.find((article) => article.id === Number(id)) ?? mockArticles[0]))
-      .finally(() => setIsLoading(false))
+    let isMounted = true
+
+    Promise.allSettled([getArticle(id), listComments(id), registerArticleView(id)])
+      .then(([articleResult, commentsResult, viewResult]) => {
+        if (!isMounted) {
+          return
+        }
+
+        if (articleResult.status === "fulfilled") {
+          const nextArticle = articleResult.value.article
+          const viewCount =
+            viewResult.status === "fulfilled" ? viewResult.value.article.viewsCount : nextArticle.viewsCount
+          setArticle({ ...nextArticle, viewsCount: viewCount })
+        } else {
+          setArticle(mockArticles.find((article) => article.id === Number(id)) ?? mockArticles[0])
+        }
+
+        if (commentsResult.status === "fulfilled") {
+          setComments(commentsResult.value.comments)
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
   }, [id])
 
-  const comments = useMemo(
-    () => [
-      {
-        author: "John Doe",
-        date: "20/01/2026",
-        text: "Excelente artigo! Muito bem explicado sobre as tendencias de IA.",
-        likes: 1,
-      },
-      {
-        author: "Marie Smith",
-        date: "20/01/2026",
-        text: "Artigo muito interessante, mostra claramente como a IA esta deixando de ser tendencia para se tornar parte essencial das solucoes do dia a dia.",
-        likes: 4,
-      },
-    ],
-    [],
-  )
+  const visibleTags = useMemo(() => {
+    if (!article) {
+      return []
+    }
+
+    return article.tags.length > 0 ? article.tags : ["Desenvolvimento web"]
+  }, [article])
+
+  async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!id || !token) {
+      return
+    }
+
+    const formData = new FormData(event.currentTarget)
+    const content = String(formData.get("content") ?? "")
+    setCommentError("")
+    setIsSubmittingComment(true)
+
+    try {
+      const response = await createComment(id, { content }, token)
+      setComments((current) => [response.comment, ...current])
+      event.currentTarget.reset()
+    } catch (error) {
+      setCommentError(getApiErrorMessage(error))
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  async function handleLikeToggle() {
+    if (!id || !token || !article) {
+      return
+    }
+
+    try {
+      const response = isLiked ? await unlikeArticle(id, token) : await likeArticle(id, token)
+      setIsLiked(Boolean(response.liked))
+      setArticle((current) =>
+        current
+          ? {
+              ...current,
+              likesCount: response.article.likesCount,
+              viewsCount: response.article.viewsCount,
+            }
+          : current,
+      )
+    } catch {
+      setCommentError("Nao foi possivel atualizar a curtida.")
+    }
+  }
 
   if (isLoading) {
     return <StateBlock title="Carregando artigo">Preparando a leitura.</StateBlock>
@@ -77,17 +150,19 @@ export function ArticleDetailPage() {
       <div className="page-rule" />
 
       <header className="detail-header">
-        <Badge tone="warning">Desenvolvimento web</Badge>
+        <Badge tone="warning">{article.category ?? "Desenvolvimento web"}</Badge>
         <h1>{article.title}</h1>
-        <p>Explorando as tendencias e inovacoes que moldarao o futuro da tecnologia nos proximos anos.</p>
+        <p>{article.summary ?? "Explorando as tendencias e inovacoes que moldarao o futuro da tecnologia."}</p>
         <div className="detail-author-row">
           <div className="avatar-placeholder">{article.author.name.charAt(0).toUpperCase()}</div>
           <div>
             <strong>{article.author.name}</strong>
-            <span>{formatDate(article.publishedAt)} • 6min</span>
+            <span>{formatDate(article.publishedAt)} - 6min</span>
           </div>
           <div className="detail-actions">
-            <Heart size={18} />
+            <button type="button" className={isLiked ? "detail-action liked" : "detail-action"} onClick={handleLikeToggle}>
+              <Heart size={18} />
+            </button>
             <Bookmark size={18} />
             <Share2 size={18} />
           </div>
@@ -103,20 +178,21 @@ export function ArticleDetailPage() {
       </div>
 
       <div className="tag-row">
-        <Badge>Desenvolvimento web</Badge>
-        <Badge>Inteligencia Artificial</Badge>
-        <Badge>Desenvolvimento backend</Badge>
+        {visibleTags.map((tag) => (
+          <Badge key={tag}>{tag}</Badge>
+        ))}
       </div>
 
       <section className="comments-section">
-        <h2>Comentario (2)</h2>
+        <h2>Comentarios ({comments.length})</h2>
         {isAuthenticated ? (
-          <div className="comment-box">
-            <textarea defaultValue="Otimo artigo. Esperando pelo proximo!" />
-            <button type="button" className="button-primary">
-              Publicar Comentario
+          <form className="comment-box" onSubmit={handleCommentSubmit}>
+            <textarea name="content" placeholder="Otimo artigo. Esperando pelo proximo!" />
+            {commentError ? <p className="form-error">{commentError}</p> : null}
+            <button type="submit" className="button-primary" disabled={isSubmittingComment}>
+              {isSubmittingComment ? "Publicando..." : "Publicar Comentario"}
             </button>
-          </div>
+          </form>
         ) : (
           <div className="login-comment-box">
             <span>Faca login para comentar</span>
@@ -126,16 +202,15 @@ export function ArticleDetailPage() {
           </div>
         )}
         {comments.map((comment) => (
-          <article className="comment-card" key={`${comment.author}-${comment.text}`}>
-            <div className="avatar-placeholder">{comment.author.charAt(0)}</div>
+          <article className="comment-card" key={comment.id}>
+            <div className="avatar-placeholder">{comment.author.name.charAt(0).toUpperCase()}</div>
             <div>
-              <strong>{comment.author}</strong>
-              <span>{comment.date}</span>
-              <p>{comment.text}</p>
+              <strong>{comment.author.name}</strong>
+              <span>{formatDate(comment.createdAt)}</span>
+              <p>{comment.content}</p>
             </div>
             <span className="comment-like">
-              <Heart size={15} />
-              {comment.likes}
+              <Heart size={15} />0
             </span>
           </article>
         ))}

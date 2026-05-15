@@ -906,6 +906,18 @@
   color: var(--muted-foreground);
 }
 
+.detail-action {
+  display: inline-flex;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.detail-action.liked {
+  color: var(--cyan);
+}
+
 .detail-header .article-meta {
   margin-top: 14px;
 }
