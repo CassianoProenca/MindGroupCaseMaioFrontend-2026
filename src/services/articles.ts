@@ -11,7 +11,7 @@ import {
   type CommentPayload,
 } from "@/types/api"
 
-import { api, authConfig, normalizeAxiosError, parseApiResponse } from "./api"
+import { api, authConfig, authConfigWithFile, normalizeAxiosError, parseApiResponse } from "./api"
 
 function validateArticleFormData(formData: FormData, requireBanner: boolean) {
   const banner = formData.get("banner")
@@ -56,6 +56,11 @@ type ListCategoriesParams = {
 
 type CategoryPayload = {
   name: string
+}
+
+type ArticleReadPayload = {
+  durationSeconds: number
+  readerId: string
 }
 
 export async function listCategories(params: ListCategoriesParams = {}) {
@@ -114,7 +119,7 @@ export async function getArticle(id: string | number) {
 export async function createArticle(formData: FormData, token: string) {
   try {
     validateArticleFormData(formData, true)
-    const response = await api.post("/articles", formData, authConfig(token))
+    const response = await api.post("/articles", formData, authConfigWithFile(token))
     return parseApiResponse(articleResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
@@ -124,7 +129,7 @@ export async function createArticle(formData: FormData, token: string) {
 export async function updateArticle(id: string | number, formData: FormData, token: string) {
   try {
     validateArticleFormData(formData, false)
-    const response = await api.put(`/articles/${id}`, formData, authConfig(token))
+    const response = await api.put(`/articles/${id}`, formData, authConfigWithFile(token))
     return parseApiResponse(articleResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
@@ -158,10 +163,18 @@ export async function createComment(articleId: string | number, payload: Comment
   }
 }
 
-export async function registerArticleView(articleId: string | number) {
+export async function registerArticleView(articleId: string | number, readerId: string) {
   try {
-    const response = await api.post(`/articles/${articleId}/view`)
+    const response = await api.post(`/articles/${articleId}/view`, { readerId })
     return parseApiResponse(engagementResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function registerArticleRead(articleId: string | number, payload: ArticleReadPayload, token?: string | null) {
+  try {
+    await api.post(`/articles/${articleId}/read`, payload, token ? authConfig(token) : undefined)
   } catch (error) {
     normalizeAxiosError(error)
   }
