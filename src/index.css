@@ -127,6 +127,80 @@
   font-weight: 600;
 }
 
+.user-menu {
+  position: relative;
+}
+
+.avatar-button,
+.avatar-placeholder {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: #d7dce3;
+  color: #11161e;
+  font-weight: 900;
+}
+
+.avatar-button {
+  padding: 0;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: none;
+  width: 230px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.user-menu:hover .user-dropdown,
+.user-menu:focus-within .user-dropdown {
+  display: block;
+}
+
+.user-summary {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+}
+
+.user-summary strong,
+.user-summary small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-summary small {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted-foreground);
+  padding: 13px 14px;
+  text-align: left;
+}
+
+.user-dropdown button:last-child {
+  border-bottom: 0;
+}
+
 .site-nav a {
   color: var(--foreground);
   opacity: 0.92;
@@ -420,6 +494,72 @@
   padding-top: 28px;
   text-align: center;
   font-size: 0.84rem;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 710px;
+  place-items: start center;
+  padding: 95px 24px;
+  text-align: center;
+}
+
+.auth-logo {
+  width: 112px;
+  margin-bottom: 32px;
+}
+
+.auth-page h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+}
+
+.auth-page > p {
+  margin: 14px 0 32px;
+  color: var(--muted-foreground);
+  font-size: 1.3rem;
+}
+
+.auth-card {
+  width: min(100%, 360px);
+  padding: 28px;
+  text-align: left;
+}
+
+.auth-card form {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-separator {
+  height: 1px;
+  background: var(--line);
+}
+
+.auth-switch {
+  margin: 0;
+  color: var(--muted-foreground);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.auth-switch a {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.form-error {
+  margin: 0;
+  border: 1px solid #7a272b;
+  background: rgba(240, 68, 68, 0.1);
+  color: #ff7479;
+  padding: 10px 12px;
+  font-size: 0.88rem;
 }
 
 @media (max-width: 760px) {

@@ -1,6 +1,11 @@
 import { Link, NavLink } from "react-router-dom"
 
+import { UserMenu } from "@/components/auth/UserMenu"
+import { useAuth } from "@/context/AuthContext"
+
 export function Header() {
+  const { isAuthenticated } = useAuth()
+
   return (
     <header className="site-header">
       <Link to="/" className="brand-link" aria-label="TechBlog home">
@@ -14,10 +19,16 @@ export function Header() {
         <button type="button" className="icon-button" aria-label="Alternar tema">
           ☾
         </button>
-        <NavLink to="/login">Entrar</NavLink>
-        <NavLink to="/cadastro" className="nav-cta">
-          Cadastrar
-        </NavLink>
+        {isAuthenticated ? (
+          <UserMenu />
+        ) : (
+          <>
+            <NavLink to="/login">Entrar</NavLink>
+            <NavLink to="/cadastro" className="nav-cta">
+              Cadastrar
+            </NavLink>
+          </>
+        )}
       </nav>
     </header>
   )
