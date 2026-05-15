@@ -17,6 +17,9 @@ type ArticleFormProps = {
 
 export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: ArticleFormProps) {
   const [title, setTitle] = useState(article?.title ?? "")
+  const [summary, setSummary] = useState(article?.summary ?? "")
+  const [category, setCategory] = useState(article?.category ?? "Desenvolvimento web")
+  const [tags, setTags] = useState(article?.tags?.join(", ") ?? "")
   const [content, setContent] = useState(article?.content ?? "")
   const [file, setFile] = useState<File | null>(null)
 
@@ -27,6 +30,11 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
 
     return article ? getArticleImage(article.id, article.bannerUrl) : null
   }, [article, file])
+
+  const tagList = tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -47,14 +55,20 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
       <TextArea
         name="summary"
         label="Resumo *"
-        value="Desenvolvedor Full Stack apaixonado por tecnologia e inovacao."
-        readOnly
-        hint="Campo visual temporario ate existir resumo no backend"
+        value={summary}
+        onChange={(event) => setSummary(event.target.value)}
+        maxLength={280}
+        required
+        hint={`${summary.length}/280 caracteres`}
       />
       <label className="field-shell">
         <span>Categoria *</span>
-        <select className="text-field" defaultValue="Desenvolvimento web">
+        <select className="text-field" name="category" value={category} onChange={(event) => setCategory(event.target.value)}>
           <option>Desenvolvimento web</option>
+          <option>Inteligencia Artificial</option>
+          <option>Backend</option>
+          <option>Frontend</option>
+          <option>DevOps</option>
         </select>
       </label>
       <label className="field-shell">
@@ -70,11 +84,17 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
         {previewUrl ? <img className="banner-preview" src={previewUrl} alt="" /> : null}
       </label>
       <div className="tags-field">
-        <TextInput label="Tags" placeholder="Adicionar tags" />
+        <TextInput
+          name="tags"
+          label="Tags"
+          placeholder="Typescript, Backend, IA"
+          value={tags}
+          onChange={(event) => setTags(event.target.value)}
+        />
         <div>
-          <Badge>Typescript</Badge>
-          <Badge>Backend</Badge>
-          <Badge>IA</Badge>
+          {tagList.map((tag) => (
+            <Badge key={tag}>{tag}</Badge>
+          ))}
         </div>
       </div>
       <TextArea
@@ -86,7 +106,7 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
         minLength={20}
       />
       <small className="article-counter">
-        {content.length}/8000 caracteres • {content.trim().split(/\s+/).filter(Boolean).length} palavras •{" "}
+        {content.length}/8000 caracteres - {content.trim().split(/\s+/).filter(Boolean).length} palavras -{" "}
         {getReadingTime(content)} minutos de leitura
       </small>
       {error ? <p className="form-error">{error}</p> : null}

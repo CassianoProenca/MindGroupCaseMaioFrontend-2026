@@ -15,7 +15,10 @@ function validateArticleFormData(formData: FormData, requireBanner: boolean) {
   const banner = formData.get("banner")
   const payload = {
     title: String(formData.get("title") ?? ""),
+    summary: String(formData.get("summary") ?? ""),
     content: String(formData.get("content") ?? ""),
+    category: String(formData.get("category") ?? ""),
+    tags: String(formData.get("tags") ?? ""),
     banner: banner instanceof File && banner.size > 0 ? banner : undefined,
   }
 
