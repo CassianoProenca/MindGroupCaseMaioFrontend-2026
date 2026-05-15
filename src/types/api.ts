@@ -23,6 +23,7 @@ export const articleSchema = z.object({
   title: z.string(),
   summary: z.string().nullable().optional(),
   content: z.string(),
+  categoryId: z.number().nullable().optional(),
   category: z.string().nullable().optional(),
   bannerUrl: z.string().nullable(),
   viewsCount: z.number().optional().default(0),
@@ -33,8 +34,16 @@ export const articleSchema = z.object({
   tags: z.array(z.string()).optional().default([]),
 })
 
+export const paginationMetaSchema = z.object({
+  page: z.number(),
+  perPage: z.number(),
+  total: z.number(),
+  totalPages: z.number(),
+})
+
 export const articlesResponseSchema = z.object({
   articles: z.array(articleSchema),
+  meta: paginationMetaSchema.optional(),
 })
 
 export const articleResponseSchema = z.object({
@@ -55,6 +64,23 @@ export const commentSchema = z.object({
 
 export const commentsResponseSchema = z.object({
   comments: z.array(commentSchema),
+  meta: paginationMetaSchema.optional(),
+})
+
+export const categorySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+  articlesCount: z.number(),
+})
+
+export const categoriesResponseSchema = z.object({
+  categories: z.array(categorySchema),
+  meta: paginationMetaSchema.optional(),
+})
+
+export const categoryResponseSchema = z.object({
+  category: categorySchema,
 })
 
 export const commentResponseSchema = z.object({
@@ -117,11 +143,15 @@ export type User = z.infer<typeof userSchema>
 export type AuthResponse = z.infer<typeof authResponseSchema>
 export type MeResponse = z.infer<typeof meResponseSchema>
 export type Article = z.infer<typeof articleSchema>
+export type PaginationMeta = z.infer<typeof paginationMetaSchema>
 export type ArticlesResponse = z.infer<typeof articlesResponseSchema>
 export type ArticleResponse = z.infer<typeof articleResponseSchema>
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>
 export type Comment = z.infer<typeof commentSchema>
 export type CommentsResponse = z.infer<typeof commentsResponseSchema>
+export type Category = z.infer<typeof categorySchema>
+export type CategoriesResponse = z.infer<typeof categoriesResponseSchema>
+export type CategoryResponse = z.infer<typeof categoryResponseSchema>
 export type CommentResponse = z.infer<typeof commentResponseSchema>
 export type Profile = z.infer<typeof profileSchema>
 export type ProfileResponse = z.infer<typeof profileResponseSchema>

@@ -2,6 +2,8 @@ import {
   commentPayloadSchema,
   commentResponseSchema,
   commentsResponseSchema,
+  categoriesResponseSchema,
+  categoryResponseSchema,
   engagementResponseSchema,
   articlePayloadSchema,
   articleResponseSchema,
@@ -33,9 +35,67 @@ function validateArticleFormData(formData: FormData, requireBanner: boolean) {
   }
 }
 
-export async function listArticles() {
+type ListArticlesParams = {
+  categoryId?: string
+  page?: number
+  perPage?: number
+  search?: string
+}
+
+type ListCommentsParams = {
+  page?: number
+  perPage?: number
+  search?: string
+}
+
+type ListCategoriesParams = {
+  page?: number
+  perPage?: number
+  search?: string
+}
+
+type CategoryPayload = {
+  name: string
+}
+
+export async function listCategories(params: ListCategoriesParams = {}) {
   try {
-    const response = await api.get("/articles")
+    const response = await api.get("/articles/categories", { params })
+    return parseApiResponse(categoriesResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function createCategory(payload: CategoryPayload, token: string) {
+  try {
+    const response = await api.post("/articles/categories", payload, authConfig(token))
+    return parseApiResponse(categoryResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function updateCategory(id: string | number, payload: CategoryPayload, token: string) {
+  try {
+    const response = await api.put(`/articles/categories/${id}`, payload, authConfig(token))
+    return parseApiResponse(categoryResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function deleteCategory(id: string | number, token: string) {
+  try {
+    await api.delete(`/articles/categories/${id}`, authConfig(token))
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function listArticles(params: ListArticlesParams = {}) {
+  try {
+    const response = await api.get("/articles", { params })
     return parseApiResponse(articlesResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
@@ -79,9 +139,9 @@ export async function deleteArticle(id: string | number, token: string) {
   }
 }
 
-export async function listComments(articleId: string | number) {
+export async function listComments(articleId: string | number, params: ListCommentsParams = {}) {
   try {
-    const response = await api.get(`/articles/${articleId}/comments`)
+    const response = await api.get(`/articles/${articleId}/comments`, { params })
     return parseApiResponse(commentsResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
@@ -101,6 +161,15 @@ export async function createComment(articleId: string | number, payload: Comment
 export async function registerArticleView(articleId: string | number) {
   try {
     const response = await api.post(`/articles/${articleId}/view`)
+    return parseApiResponse(engagementResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function getArticleLikeStatus(articleId: string | number, token: string) {
+  try {
+    const response = await api.get(`/articles/${articleId}/like`, authConfig(token))
     return parseApiResponse(engagementResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
