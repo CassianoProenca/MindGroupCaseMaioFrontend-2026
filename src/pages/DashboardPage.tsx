@@ -1,18 +1,19 @@
 import { useMemo, useState } from "react"
-import { Edit3, FileText, Heart, MessageSquare, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
+import { Edit3, FileText, FolderTree, Heart, MessageSquare, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { DeleteArticleModal } from "@/components/articles/DeleteArticleModal"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { useArticles } from "@/hooks/useArticles"
-import { formatDate, getArticleImage, getExcerpt, getReadingTime } from "@/lib/format"
+import { formatDate, getArticleImage, getArticleImageFallback, getExcerpt, getReadingTime } from "@/lib/format"
 import { deleteArticle } from "@/services/articles"
 import type { Article } from "@/types/api"
 
 export function DashboardPage() {
   const { user, token } = useAuth()
-  const { articles, isLoading } = useArticles()
+  const [page, setPage] = useState(1)
+  const { articles, meta, isLoading } = useArticles({ page, perPage: 4 })
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deletedArticleIds, setDeletedArticleIds] = useState<number[]>([])
@@ -63,6 +64,10 @@ export function DashboardPage() {
             <Settings size={18} />
             Configuracoes
           </Link>
+          <Link to="/categorias" className="button-secondary">
+            <FolderTree size={18} />
+            Categorias
+          </Link>
           <Link to="/artigos/novo" className="button-primary">
             <Plus size={18} />
             Novo Artigo
@@ -91,9 +96,15 @@ export function DashboardPage() {
           {isLoading ? <StateBlock title="Carregando artigos" /> : null}
           {!isLoading && dashboardArticles.length === 0 ? <StateBlock title="Nenhum artigo publicado" /> : null}
           {!isLoading
-            ? dashboardArticles.slice(0, 4).map((article) => (
+            ? dashboardArticles.map((article) => (
                 <article className="dashboard-article" key={article.id}>
-                  <img src={getArticleImage(article.id, article.bannerUrl)} alt="" />
+                  <img
+                    src={getArticleImage(article.id, article.bannerUrl)}
+                    alt=""
+                    onError={(event) => {
+                      event.currentTarget.src = getArticleImageFallback(article.id)
+                    }}
+                  />
                   <div>
                     <h3>{article.title}</h3>
                     <p>{getExcerpt(article.summary || article.content, 85)}</p>
@@ -114,6 +125,24 @@ export function DashboardPage() {
                 </article>
               ))
             : null}
+          {!isLoading && meta.totalPages > 1 ? (
+            <div className="pagination-row dashboard-pagination">
+              <button type="button" className="button-secondary" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+                Anterior
+              </button>
+              <span>
+                Pagina {meta.page} de {meta.totalPages}
+              </span>
+              <button
+                type="button"
+                className="button-secondary"
+                disabled={page >= meta.totalPages}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Proxima
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <aside className="surface-panel recent-activity">
