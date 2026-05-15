@@ -68,3 +68,20 @@ O frontend consome:
 ## Observacoes
 
 Comentarios, curtidas, visualizacoes, tags, categorias, metricas e configuracoes de perfil aparecem como UI temporaria porque ainda nao existem no backend. O CRUD minimo de artigos, autenticacao e upload de banner estao integrados.
+
+## Cobertura dos requisitos do case
+
+- Frontend em React com TypeScript: completo.
+- Backend em Node.js, Express e TypeScript: completo no repositorio backend.
+- Banco MySQL: completo no repositorio backend via Docker Compose.
+- ORM Prisma: completo no repositorio backend.
+- Cadastro e login de usuarios: completo.
+- Usuario com nome, email e senha: completo.
+- Senhas criptografadas com bcrypt: completo no backend.
+- Artigos com titulo, conteudo, autor, data de publicacao, data de alteracao e banner: completo.
+- Criacao, edicao e remocao protegidas por login: completo.
+- Banner salvo como BLOB: completo no backend, consumido pelo endpoint `/articles/:id/banner`.
+- Dump SQL: completo no repositorio backend.
+- Repositorios e commits organizados: completo localmente.
+
+Recursos visuais ainda mockados por nao fazerem parte do minimo obrigatorio: comentarios, curtidas, visualizacoes, tags, categoria real, perfil, configuracoes e metricas do dashboard.
