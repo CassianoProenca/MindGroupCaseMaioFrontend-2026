@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { mockArticles } from "@/data/mockArticles"
+import { getReaderId, hasViewedArticle, markArticleAsViewed, useArticleReadTracker } from "@/hooks/useArticleReadTracker"
 import { formatDate, getArticleImage, getArticleImageFallback } from "@/lib/format"
 import { getApiErrorMessage } from "@/services/api"
 import {
@@ -56,14 +57,20 @@ export function ArticleDetailPage() {
   const [commentError, setCommentError] = useState("")
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
 
+  useArticleReadTracker(article?.id ?? null, token)
+
   useEffect(() => {
     if (!id) {
       return
     }
 
     let isMounted = true
+    const articleId = Number(id)
 
-    Promise.allSettled([getArticle(id), registerArticleView(id)])
+    Promise.allSettled([
+      getArticle(id),
+      !hasViewedArticle(articleId) ? registerArticleView(id, getReaderId()) : Promise.resolve(null),
+    ])
       .then(([articleResult, viewResult]) => {
         if (!isMounted) {
           return
@@ -72,12 +79,14 @@ export function ArticleDetailPage() {
         if (articleResult.status === "fulfilled") {
           const nextArticle = articleResult.value.article
           const viewCount =
-            viewResult.status === "fulfilled" ? viewResult.value.article.viewsCount : nextArticle.viewsCount
+            viewResult && viewResult.status === "fulfilled"
+              ? viewResult.value.article.viewsCount
+              : nextArticle.viewsCount
           setArticle({ ...nextArticle, viewsCount: viewCount })
+          markArticleAsViewed(articleId)
         } else {
-          setArticle(mockArticles.find((article) => article.id === Number(id)) ?? mockArticles[0])
+          setArticle(mockArticles.find((article) => article.id === articleId) ?? mockArticles[0])
         }
-
       })
       .finally(() => {
         if (isMounted) {
