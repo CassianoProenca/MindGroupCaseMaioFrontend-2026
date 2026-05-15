@@ -15,26 +15,25 @@ export function DashboardPage() {
   const { articles, isLoading } = useArticles()
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [visibleArticles, setVisibleArticles] = useState(articles)
+  const [deletedArticleIds, setDeletedArticleIds] = useState<number[]>([])
 
-  const dashboardArticles = visibleArticles.length ? visibleArticles : articles
+  const dashboardArticles = articles.filter((article) => !deletedArticleIds.includes(article.id))
 
-  const stats = useMemo(
-    () => [
+  const stats = useMemo(() => {
+    const totalViews = dashboardArticles.reduce((total, article) => total + article.viewsCount, 0)
+    const totalLikes = dashboardArticles.reduce((total, article) => total + article.likesCount, 0)
+    const averageReadingTime = Math.round(
+      dashboardArticles.reduce((total, article) => total + getReadingTime(article.content), 0) /
+        Math.max(1, dashboardArticles.length),
+    )
+
+    return [
       { label: "Total de Artigos", value: dashboardArticles.length, icon: FileText },
-      { label: "Engajamento", value: "4", icon: MessageSquare },
-      { label: "Curtidas", value: "20", icon: Heart },
-      {
-        label: "Tempo medio de leitura",
-        value: `${Math.round(
-          dashboardArticles.reduce((total, article) => total + getReadingTime(article.content), 0) /
-            Math.max(1, dashboardArticles.length),
-        )} min`,
-        icon: TrendingUp,
-      },
-    ],
-    [dashboardArticles],
-  )
+      { label: "Engajamento", value: totalViews + totalLikes, icon: MessageSquare },
+      { label: "Curtidas", value: totalLikes, icon: Heart },
+      { label: "Tempo medio de leitura", value: `${averageReadingTime} min`, icon: TrendingUp },
+    ]
+  }, [dashboardArticles])
 
   async function handleDelete() {
     if (!articleToDelete || !token) {
@@ -45,7 +44,7 @@ export function DashboardPage() {
 
     try {
       await deleteArticle(articleToDelete.id, token)
-      setVisibleArticles((current) => current.filter((article) => article.id !== articleToDelete.id))
+      setDeletedArticleIds((current) => [...current, articleToDelete.id])
       setArticleToDelete(null)
     } finally {
       setIsDeleting(false)
@@ -90,14 +89,17 @@ export function DashboardPage() {
         <section className="surface-panel dashboard-list-panel">
           <h2>Meus Artigos</h2>
           {isLoading ? <StateBlock title="Carregando artigos" /> : null}
+          {!isLoading && dashboardArticles.length === 0 ? <StateBlock title="Nenhum artigo publicado" /> : null}
           {!isLoading
             ? dashboardArticles.slice(0, 4).map((article) => (
                 <article className="dashboard-article" key={article.id}>
                   <img src={getArticleImage(article.id, article.bannerUrl)} alt="" />
                   <div>
                     <h3>{article.title}</h3>
-                    <p>{getExcerpt(article.content, 85)}</p>
-                    <span>{formatDate(article.publishedAt)} • 💬 2 • ♡ 1</span>
+                    <p>{getExcerpt(article.summary || article.content, 85)}</p>
+                    <span>
+                      {formatDate(article.publishedAt)} - {article.viewsCount} views - {article.likesCount} likes
+                    </span>
                   </div>
                   <div className="dashboard-row-actions">
                     <Link to={`/artigos/${article.id}/editar`} className="button-secondary">
@@ -116,15 +118,16 @@ export function DashboardPage() {
 
         <aside className="surface-panel recent-activity">
           <h2>Atividade Recente</h2>
-          {[1, 2, 3].map((item) => (
-            <article key={item}>
-              <div className="avatar-placeholder">M</div>
+          {dashboardArticles.slice(0, 3).map((article) => (
+            <article key={article.id}>
+              <div className="avatar-placeholder">{article.author.name.charAt(0).toUpperCase()}</div>
               <p>
-                <strong>Marie Smith</strong> comentou em O Futuro da Inteligencia Artificial em 2025
-                <span>5 min atras</span>
+                <strong>{article.author.name}</strong> publicou {article.title}
+                <span>{article.category ?? "Sem categoria"} - {formatDate(article.updatedAt)}</span>
               </p>
             </article>
           ))}
+          {!isLoading && dashboardArticles.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
         </aside>
       </div>
 
