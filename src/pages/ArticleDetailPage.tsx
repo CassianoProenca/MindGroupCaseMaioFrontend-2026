@@ -7,17 +7,27 @@ import { Badge } from "@/components/ui/Badge"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { mockArticles } from "@/data/mockArticles"
-import { formatDate, getArticleImage } from "@/lib/format"
+import { formatDate, getArticleImage, getArticleImageFallback } from "@/lib/format"
 import { getApiErrorMessage } from "@/services/api"
 import {
   createComment,
   getArticle,
+  getArticleLikeStatus,
   likeArticle,
   listComments,
   registerArticleView,
   unlikeArticle,
 } from "@/services/articles"
-import type { Article, Comment } from "@/types/api"
+import type { Article, Comment, PaginationMeta } from "@/types/api"
+
+const commentsPerPage = 5
+
+const emptyCommentsMeta: PaginationMeta = {
+  page: 1,
+  perPage: commentsPerPage,
+  total: 0,
+  totalPages: 1,
+}
 
 function renderContent(content: string) {
   return content.split("\n").map((line, index) => {
@@ -38,7 +48,10 @@ export function ArticleDetailPage() {
   const { isAuthenticated, token } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
+  const [commentsMeta, setCommentsMeta] = useState<PaginationMeta>(emptyCommentsMeta)
+  const [commentSearch, setCommentSearch] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingComments, setIsLoadingComments] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [commentError, setCommentError] = useState("")
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
@@ -50,8 +63,8 @@ export function ArticleDetailPage() {
 
     let isMounted = true
 
-    Promise.allSettled([getArticle(id), listComments(id), registerArticleView(id)])
-      .then(([articleResult, commentsResult, viewResult]) => {
+    Promise.allSettled([getArticle(id), registerArticleView(id)])
+      .then(([articleResult, viewResult]) => {
         if (!isMounted) {
           return
         }
@@ -65,9 +78,6 @@ export function ArticleDetailPage() {
           setArticle(mockArticles.find((article) => article.id === Number(id)) ?? mockArticles[0])
         }
 
-        if (commentsResult.status === "fulfilled") {
-          setComments(commentsResult.value.comments)
-        }
       })
       .finally(() => {
         if (isMounted) {
@@ -79,6 +89,75 @@ export function ArticleDetailPage() {
       isMounted = false
     }
   }, [id])
+
+  useEffect(() => {
+    if (!id || !isAuthenticated || !token) {
+      setIsLiked(false)
+      return
+    }
+
+    let isMounted = true
+
+    getArticleLikeStatus(id, token)
+      .then((response) => {
+        if (isMounted) {
+          setIsLiked(Boolean(response.liked))
+          setArticle((current) =>
+            current
+              ? {
+                  ...current,
+                  likesCount: response.article.likesCount,
+                }
+              : current,
+          )
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsLiked(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [id, isAuthenticated, token])
+
+  useEffect(() => {
+    if (!id) {
+      return
+    }
+
+    let isMounted = true
+    setIsLoadingComments(true)
+
+    listComments(id, {
+      page: 1,
+      perPage: commentsPerPage,
+      search: commentSearch.trim() || undefined,
+    })
+      .then(({ comments, meta }) => {
+        if (isMounted) {
+          setComments(comments)
+          setCommentsMeta(meta ?? emptyCommentsMeta)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setComments([])
+          setCommentsMeta(emptyCommentsMeta)
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingComments(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [id, commentSearch])
 
   const visibleTags = useMemo(() => {
     if (!article) {
@@ -95,7 +174,8 @@ export function ArticleDetailPage() {
       return
     }
 
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const content = String(formData.get("content") ?? "")
     setCommentError("")
     setIsSubmittingComment(true)
@@ -103,7 +183,8 @@ export function ArticleDetailPage() {
     try {
       const response = await createComment(id, { content }, token)
       setComments((current) => [response.comment, ...current])
-      event.currentTarget.reset()
+      setCommentsMeta((current) => ({ ...current, total: current.total + 1 }))
+      form.reset()
     } catch (error) {
       setCommentError(getApiErrorMessage(error))
     } finally {
@@ -111,8 +192,34 @@ export function ArticleDetailPage() {
     }
   }
 
+  async function handleLoadMoreComments() {
+    if (!id || commentsMeta.page >= commentsMeta.totalPages) {
+      return
+    }
+
+    setIsLoadingComments(true)
+
+    try {
+      const nextPage = commentsMeta.page + 1
+      const response = await listComments(id, {
+        page: nextPage,
+        perPage: commentsPerPage,
+        search: commentSearch.trim() || undefined,
+      })
+      setComments((current) => [...current, ...response.comments])
+      setCommentsMeta(response.meta ?? commentsMeta)
+    } finally {
+      setIsLoadingComments(false)
+    }
+  }
+
   async function handleLikeToggle() {
-    if (!id || !token || !article) {
+    if (!id || !article) {
+      return
+    }
+
+    if (!token) {
+      setCommentError("Faca login para curtir artigos.")
       return
     }
 
@@ -162,6 +269,7 @@ export function ArticleDetailPage() {
           <div className="detail-actions">
             <button type="button" className={isLiked ? "detail-action liked" : "detail-action"} onClick={handleLikeToggle}>
               <Heart size={18} />
+              <span>{article.likesCount}</span>
             </button>
             <Bookmark size={18} />
             <Share2 size={18} />
@@ -170,7 +278,14 @@ export function ArticleDetailPage() {
         <ArticleMeta article={article} />
       </header>
 
-      <img className="detail-banner" src={getArticleImage(article.id, article.bannerUrl)} alt="" />
+      <img
+        className="detail-banner"
+        src={getArticleImage(article.id, article.bannerUrl)}
+        alt=""
+        onError={(event) => {
+          event.currentTarget.src = getArticleImageFallback(article.id)
+        }}
+      />
 
       <div className="article-prose">
         <h2>{article.title}</h2>
@@ -184,7 +299,14 @@ export function ArticleDetailPage() {
       </div>
 
       <section className="comments-section">
-        <h2>Comentarios ({comments.length})</h2>
+        <h2>Comentarios ({commentsMeta.total})</h2>
+        <label className="search-box comments-search">
+          <input
+            value={commentSearch}
+            onChange={(event) => setCommentSearch(event.target.value)}
+            placeholder="Buscar comentarios..."
+          />
+        </label>
         {isAuthenticated ? (
           <form className="comment-box" onSubmit={handleCommentSubmit}>
             <textarea name="content" placeholder="Otimo artigo. Esperando pelo proximo!" />
@@ -214,6 +336,11 @@ export function ArticleDetailPage() {
             </span>
           </article>
         ))}
+        {commentsMeta.page < commentsMeta.totalPages ? (
+          <button type="button" className="button-secondary comments-more" disabled={isLoadingComments} onClick={handleLoadMoreComments}>
+            {isLoadingComments ? "Carregando..." : "Carregar mais comentarios"}
+          </button>
+        ) : null}
       </section>
     </article>
   )
