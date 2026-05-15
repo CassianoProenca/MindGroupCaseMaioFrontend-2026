@@ -8,14 +8,22 @@ export const mockArticles: Article[] = Array.from({ length: 10 }).map((_, index)
     index % 2 === 0
       ? "O Futuro da Inteligencia Artificial em 2025"
       : "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+  summary: "Explorando tendencias e inovacoes que moldam o futuro da tecnologia.",
   content:
     "A inteligencia artificial continua a evoluir em um ritmo acelerado. Neste artigo, vamos explorar as principais tendencias e inovacoes que estao moldando o futuro da IA.\n\n## Modelos de Linguagem Avancados\n\nOs modelos de linguagem como GPT-4 e alem estao se tornando cada vez mais sofisticados, capazes de entender e gerar texto com precisao impressionante.\n\n## Automacao Inteligente\n\nA automacao esta alcancando novos patamares com sistemas de IA que podem tomar decisoes complexas e adaptar-se a novas situacoes.\n\n## Etica e Responsabilidade\n\nCom o avanco da IA, questoes eticas se tornam cada vez mais importantes. E crucial desenvolver sistemas responsaveis e transparentes.",
+  category: index % 2 === 0 ? "Desenvolvimento web" : "Desenvolvimento backend",
   bannerUrl: null,
+  viewsCount: 122,
+  likesCount: index + 1,
   publishedAt: now,
   updatedAt: now,
   author: {
     id: 1,
     name: "John Doe",
     email: "john@example.com",
+    bio: "Desenvolvedor Full Stack apaixonado por tecnologia.",
+    avatarUrl: null,
+    role: "AUTHOR",
   },
+  tags: ["Typescript", "Backend", "IA"],
 }))
