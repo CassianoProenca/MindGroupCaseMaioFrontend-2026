@@ -166,6 +166,8 @@
 
 .avatar-button {
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
   border: 0;
   background: transparent;
   padding: 0;
@@ -182,9 +184,18 @@
   background: var(--surface);
 }
 
-.user-menu:hover .user-dropdown,
-.user-menu:focus-within .user-dropdown {
+.user-menu.open .user-dropdown {
   display: block;
+}
+
+.user-menu-chevron {
+  margin-left: 4px;
+  color: var(--muted-foreground);
+  transition: transform 0.15s ease;
+}
+
+.user-menu.open .user-menu-chevron {
+  transform: rotate(180deg);
 }
 
 .user-summary {
