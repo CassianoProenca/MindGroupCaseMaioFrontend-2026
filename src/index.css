@@ -1347,7 +1347,8 @@
 }
 
 .recent-activity-body {
-  max-height: 540px;
+  flex: 1 1 auto;
+  min-height: 240px;
   overflow-y: auto;
   margin-bottom: 18px;
   scrollbar-color: var(--line) transparent;
@@ -1416,6 +1417,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(310px, 0.75fr);
   gap: 38px;
+  align-items: stretch;
+}
+
+.dashboard-grid > .recent-activity {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .dashboard-list-panel h2,
