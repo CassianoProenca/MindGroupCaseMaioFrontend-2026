@@ -57,21 +57,46 @@ VITE_API_URL=http://localhost:3333
 
 O frontend consome:
 
+Autenticacao
 - `POST /auth/register`
 - `POST /auth/login`
 - `GET /auth/me`
+
+Artigos
 - `GET /articles`
 - `GET /articles/:id`
+- `GET /articles/:id/banner`
 - `POST /articles`
 - `PUT /articles/:id`
 - `DELETE /articles/:id`
-- `GET /articles/:id/banner`
+
+Categorias
+- `GET /articles/categories`
+- `POST /articles/categories`
+- `PUT /articles/categories/:id`
+- `DELETE /articles/categories/:id`
+
+Comentarios
+- `GET /articles/:id/comments`
+- `POST /articles/:id/comments`
+
+Engajamento
+- `POST /articles/:id/view`
+- `POST /articles/:id/read`
+- `GET /articles/:id/like`
+- `POST /articles/:id/like`
+- `DELETE /articles/:id/like`
+
+Perfil
+- `GET /profile/me`
+- `PUT /profile/me`
+- `GET /profile/me/dashboard`
 
 As respostas e payloads principais sao validados com Zod na camada de services antes de serem usados pela interface. As chamadas HTTP usam uma instancia centralizada do Axios configurada por `VITE_API_URL`.
 
 ## Observacoes
 
-Comentarios, curtidas, visualizacoes, tags, categorias, metricas e configuracoes de perfil aparecem como UI temporaria porque ainda nao existem no backend. O CRUD minimo de artigos, autenticacao e upload de banner estao integrados.
+Todos os recursos exibidos pela interface (artigos, comentarios, curtidas, visualizacoes, tags, categorias, perfil e metricas do dashboard) consomem dados reais do backend. Quando a API esta indisponivel, as paginas mostram empty states em vez de dados ficticios.
 
 ## Cobertura dos requisitos do case
 
@@ -88,4 +113,4 @@ Comentarios, curtidas, visualizacoes, tags, categorias, metricas e configuracoes
 - Dump SQL: completo no repositorio backend.
 - Repositorios e commits organizados: completo localmente.
 
-Recursos visuais ainda mockados por nao fazerem parte do minimo obrigatorio: comentarios, curtidas, visualizacoes, tags, categoria real, perfil, configuracoes e metricas do dashboard.
+Recursos extras ja entregues alem do minimo: categorias, comentarios, curtidas, registro de visualizacoes e tempo de leitura, perfil de usuario com bio/avatar e dashboard com metricas reais por artigo.
