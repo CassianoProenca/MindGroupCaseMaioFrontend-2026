@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { ArrowLeft, Bookmark, Heart, Share2 } from "lucide-react"
+import { ArrowLeft, Heart, Share2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
 import { ArticleMeta } from "@/components/articles/ArticleMeta"
@@ -55,6 +55,7 @@ export function ArticleDetailPage() {
   const [isLiked, setIsLiked] = useState(false)
   const [commentError, setCommentError] = useState("")
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [shareFeedback, setShareFeedback] = useState("")
 
   useArticleReadTracker(article?.id ?? null, token)
 
@@ -221,6 +222,34 @@ export function ArticleDetailPage() {
     }
   }
 
+  async function handleShare() {
+    if (!article) {
+      return
+    }
+
+    const url = window.location.href
+    const shareData = {
+      title: article.title,
+      text: article.summary ?? article.title,
+      url,
+    }
+
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share(shareData)
+        return
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+        setShareFeedback("Link copiado!")
+        setTimeout(() => setShareFeedback(""), 2500)
+      }
+    } catch {
+      // usuario cancelou o share dialog ou bloqueou clipboard
+    }
+  }
+
   async function handleLikeToggle() {
     if (!id || !article) {
       return
@@ -279,8 +308,10 @@ export function ArticleDetailPage() {
               <Heart size={18} />
               <span>{article.likesCount}</span>
             </button>
-            <Bookmark size={18} />
-            <Share2 size={18} />
+            <button type="button" className="detail-action" onClick={handleShare} aria-label="Compartilhar artigo">
+              <Share2 size={18} />
+            </button>
+            {shareFeedback ? <span className="share-feedback">{shareFeedback}</span> : null}
           </div>
         </div>
         <ArticleMeta article={article} />

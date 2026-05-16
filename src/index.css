@@ -1027,9 +1027,21 @@
   background: transparent;
   color: inherit;
   padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.detail-action:hover {
+  color: var(--foreground);
 }
 
 .detail-action.liked {
+  color: var(--cyan);
+}
+
+.share-feedback {
+  align-self: center;
+  font-size: 0.85rem;
   color: var(--cyan);
 }
 
