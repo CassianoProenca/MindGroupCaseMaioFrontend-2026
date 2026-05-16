@@ -1,6 +1,7 @@
 import { FolderTree, LayoutDashboard, LogOut, Settings } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { Avatar } from "@/components/ui/Avatar"
 import { useAuth } from "@/context/AuthContext"
 
 export function UserMenu() {
@@ -13,11 +14,11 @@ export function UserMenu() {
   return (
     <div className="user-menu">
       <button type="button" className="avatar-button" aria-label="Menu do usuario">
-        <span>{user.name.charAt(0).toUpperCase()}</span>
+        <Avatar name={user.name} url={user.avatarUrl} />
       </button>
       <div className="user-dropdown">
         <div className="user-summary">
-          <div className="avatar-placeholder">{user.name.charAt(0).toUpperCase()}</div>
+          <Avatar name={user.name} url={user.avatarUrl} />
           <div>
             <strong>{user.name}</strong>
             <small>{user.email}</small>

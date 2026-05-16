@@ -3,6 +3,7 @@ import { BookOpen, Edit3, Eye, FileText, FolderTree, Heart, Plus, Settings, Tras
 import { Link } from "react-router-dom"
 
 import { DeleteArticleModal } from "@/components/articles/DeleteArticleModal"
+import { Avatar } from "@/components/ui/Avatar"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { formatDate, formatDuration, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
@@ -188,7 +189,7 @@ export function DashboardPage() {
           <h2>Atividade Recente</h2>
           {dashboardMetrics?.recentActivity.map((activity) => (
             <article key={activity.id}>
-              <div className="avatar-placeholder">{(user?.name ?? "A").charAt(0).toUpperCase()}</div>
+              <Avatar name={user?.name ?? "Autor"} url={user?.avatarUrl} />
               <p>
                 <strong>{user?.name ?? "Autor"}</strong> {activity.type === "published" ? "publicou" : "atualizou"}{" "}
                 {activity.title}

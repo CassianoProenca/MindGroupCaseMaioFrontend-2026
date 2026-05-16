@@ -131,7 +131,6 @@
   position: relative;
 }
 
-.avatar-button,
 .avatar-placeholder {
   display: grid;
   width: 36px;
@@ -143,8 +142,25 @@
   font-weight: 900;
 }
 
+.avatar-image {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
+.avatar-image.large {
+  width: 132px;
+  height: 132px;
+}
+
 .avatar-button {
+  display: inline-flex;
+  border: 0;
+  background: transparent;
   padding: 0;
+  cursor: pointer;
 }
 
 .user-dropdown {
@@ -1529,12 +1545,6 @@
     width: 132px;
     height: 132px;
     font-size: 3rem;
-  }
-
-  .profile-avatar-image {
-    width: 132px;
-    height: 132px;
-    object-fit: cover;
   }
 
 .icon-field {

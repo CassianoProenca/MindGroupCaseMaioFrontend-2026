@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom"
 
 import { ArticleMeta } from "@/components/articles/ArticleMeta"
 import { ShareModal } from "@/components/articles/ShareModal"
+import { Avatar } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
@@ -272,7 +273,7 @@ export function ArticleDetailPage() {
         <h1>{article.title}</h1>
         <p>{article.summary ?? "Explorando as tendencias e inovacoes que moldarao o futuro da tecnologia."}</p>
         <div className="detail-author-row">
-          <div className="avatar-placeholder">{article.author.name.charAt(0).toUpperCase()}</div>
+          <Avatar name={article.author.name} url={article.author.avatarUrl} />
           <div>
             <strong>{article.author.name}</strong>
             <span>{formatDate(article.publishedAt)} - 6min</span>
@@ -337,7 +338,7 @@ export function ArticleDetailPage() {
         )}
         {comments.map((comment) => (
           <article className="comment-card" key={comment.id}>
-            <div className="avatar-placeholder">{comment.author.name.charAt(0).toUpperCase()}</div>
+            <Avatar name={comment.author.name} url={comment.author.avatarUrl} />
             <div>
               <strong>{comment.author.name}</strong>
               <span>{formatDate(comment.createdAt)}</span>

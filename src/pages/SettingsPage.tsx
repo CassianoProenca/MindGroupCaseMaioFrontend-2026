@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { ArrowLeft, Mail, User } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { Avatar } from "@/components/ui/Avatar"
 import { TextArea, TextInput } from "@/components/ui/FormField"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
@@ -61,8 +62,6 @@ export function SettingsPage() {
     }
   }
 
-  const avatarInitial = name.charAt(0).toUpperCase() || "M"
-
   return (
     <section className="page-container narrow-page">
       <Link to="/dashboard" className="page-kicker">
@@ -78,11 +77,8 @@ export function SettingsPage() {
       ) : (
         <form className="settings-form surface-panel" onSubmit={handleSubmit}>
           <div className="profile-photo">
-            {avatarUrl ? (
-              <img className="profile-avatar-image" src={avatarUrl} alt="" />
-            ) : (
-              <div className="avatar-placeholder large">{avatarInitial}</div>
-            )}
+            <Avatar name={name || user?.name || "Mind"} url={avatarUrl || null} size="lg" />
+
             <TextInput
               label="Foto de Perfil"
               name="avatarUrl"
