@@ -1409,6 +1409,20 @@
   color: var(--muted-foreground);
 }
 
+.dashboard-article-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.dashboard-article-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .dashboard-row-actions {
   display: grid;
   min-width: max-content;

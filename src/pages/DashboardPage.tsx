@@ -6,7 +6,7 @@ import { DeleteArticleModal } from "@/components/articles/DeleteArticleModal"
 import { Avatar } from "@/components/ui/Avatar"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
-import { formatDate, formatDuration, formatRelativeTime, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
+import { formatDate, formatRelativeTime, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
 import { deleteArticle } from "@/services/articles"
 import { getApiErrorMessage } from "@/services/api"
 import { getMyDashboardMetrics, getMyRecentActivity } from "@/services/profile"
@@ -184,11 +184,18 @@ export function DashboardPage() {
                         <>
                           <h3>{article.title}</h3>
                           <p>{getExcerpt(article.summary || "Sem resumo cadastrado.", 85)}</p>
-                          <span>
-                            {formatDate(article.publishedAt)} - {articleMetrics?.viewsCount ?? article.viewsCount} views -{" "}
-                            {articleMetrics?.likesCount ?? article.likesCount} likes -{" "}
-                            {articleMetrics?.readsCount ?? 0} leituras - media real{" "}
-                            {formatDuration(articleMetrics?.averageReadSeconds ?? 0)}
+                          <span className="dashboard-article-meta">
+                            <span>{formatDate(article.publishedAt)}</span>
+                            <span aria-hidden="true">&bull;</span>
+                            <span>
+                              <MessageSquare size={14} />
+                              {articleMetrics?.commentsCount ?? article.commentsCount}
+                            </span>
+                            <span aria-hidden="true">&bull;</span>
+                            <span>
+                              <Heart size={14} />
+                              {articleMetrics?.likesCount ?? article.likesCount}
+                            </span>
                           </span>
                         </>
                       )
