@@ -1409,15 +1409,15 @@
   color: var(--muted-foreground);
 }
 
-.dashboard-article-meta {
+.dashboard-article .dashboard-article-meta {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   font-size: 0.86rem;
 }
 
-.dashboard-article-meta > span {
+.dashboard-article .dashboard-article-meta > span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
