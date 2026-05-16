@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/Badge"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { getReaderId, hasViewedArticle, markArticleAsViewed, useArticleReadTracker } from "@/hooks/useArticleReadTracker"
-import { formatDate, getArticleImage, getArticleImageFallback } from "@/lib/format"
+import { formatDate, getArticleImage, getArticleImageFallback, getReadingTime } from "@/lib/format"
 import { getApiErrorMessage } from "@/services/api"
 import {
   createComment,
@@ -276,7 +276,7 @@ export function ArticleDetailPage() {
           <Avatar name={article.author.name} url={article.author.avatarUrl} />
           <div>
             <strong>{article.author.name}</strong>
-            <span>{formatDate(article.publishedAt)} - 6min</span>
+            <span>{formatDate(article.publishedAt)} - {article.readingTimeMinutes ?? getReadingTime(article.content)}min</span>
           </div>
           <div className="detail-actions">
             <button type="button" className={isLiked ? "detail-action liked" : "detail-action"} onClick={handleLikeToggle}>

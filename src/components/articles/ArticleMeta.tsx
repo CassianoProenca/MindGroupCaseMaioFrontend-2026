@@ -25,7 +25,8 @@ export function ArticleMeta({ article, compact = false }: ArticleMetaProps) {
       </span>
       {!compact ? (
         <span>
-          <MessageSquare size={14} />2 comentarios
+          <MessageSquare size={14} />
+          {article.commentsCount} {article.commentsCount === 1 ? "comentario" : "comentarios"}
         </span>
       ) : null}
     </div>
