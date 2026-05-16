@@ -56,11 +56,19 @@ export function HomePage() {
       <section className="newsletter-band">
         <Mail size={34} />
         <h2>Newsletter Semanal</h2>
-        <p>Receba os melhores artigos de tecnologia diretamente no seu email.</p>
+        <p>Receba os melhores artigos de tecnologia diretamente no seu email. Sem spam, apenas conteudo de qualidade.</p>
         <form>
           <input placeholder="exemplo@email.com" type="email" />
           <button type="button">Inscrever</button>
         </form>
+      </section>
+
+      <section className="share-knowledge-band">
+        <h2>Compartilhe Seu Conhecimento</h2>
+        <p>Junte-se a nossa comunidade de escritores e compartilhe suas experiencias e conhecimentos em tecnologia.</p>
+        <Link to="/cadastro" className="button-primary">
+          Criar Conta Gratuita
+        </Link>
       </section>
     </>
   )
