@@ -149,16 +149,24 @@ export const dashboardMetricsSchema = z.object({
         updatedAt: z.string(),
       }),
     ),
-    recentActivity: z.array(
-      z.object({
-        id: z.number(),
-        title: z.string(),
-        category: z.string().nullable(),
-        updatedAt: z.string(),
-        type: z.enum(["published", "updated"]),
-      }),
-    ),
   }),
+})
+
+export const recentActivitySchema = z.object({
+  id: z.number(),
+  content: z.string(),
+  createdAt: z.string(),
+  author: z.object({
+    id: z.number(),
+    name: z.string(),
+    avatarUrl: z.string().nullable().optional(),
+  }),
+  article: z.object({ id: z.number(), title: z.string() }),
+})
+
+export const recentActivityResponseSchema = z.object({
+  activity: z.array(recentActivitySchema),
+  meta: paginationMetaSchema.optional(),
 })
 
 export const engagementResponseSchema = z.object({
@@ -215,6 +223,8 @@ export type CommentResponse = z.infer<typeof commentResponseSchema>
 export type Profile = z.infer<typeof profileSchema>
 export type ProfileResponse = z.infer<typeof profileResponseSchema>
 export type DashboardMetricsResponse = z.infer<typeof dashboardMetricsSchema>
+export type RecentActivity = z.infer<typeof recentActivitySchema>
+export type RecentActivityResponse = z.infer<typeof recentActivityResponseSchema>
 export type EngagementResponse = z.infer<typeof engagementResponseSchema>
 export type LoginPayload = z.infer<typeof loginPayloadSchema>
 export type RegisterPayload = z.infer<typeof registerPayloadSchema>

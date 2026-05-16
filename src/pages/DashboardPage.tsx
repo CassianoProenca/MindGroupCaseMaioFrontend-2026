@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from "react"
-import { BookOpen, Edit3, Eye, FileText, FolderTree, Heart, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
+import { Edit3, FileText, FolderTree, Heart, MessageSquare, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { DeleteArticleModal } from "@/components/articles/DeleteArticleModal"
 import { Avatar } from "@/components/ui/Avatar"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
-import { formatDate, formatDuration, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
+import { formatDate, formatDuration, formatRelativeTime, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
 import { deleteArticle } from "@/services/articles"
 import { getApiErrorMessage } from "@/services/api"
-import { getMyDashboardMetrics } from "@/services/profile"
-import type { DashboardMetricsResponse } from "@/types/api"
+import { getMyDashboardMetrics, getMyRecentActivity } from "@/services/profile"
+import type { DashboardMetricsResponse, PaginationMeta, RecentActivity } from "@/types/api"
 
 type DashboardArticle = DashboardMetricsResponse["metrics"]["articleMetrics"][number]
+
+const ACTIVITY_PER_PAGE = 3
+const emptyActivityMeta: PaginationMeta = { page: 1, perPage: ACTIVITY_PER_PAGE, total: 0, totalPages: 1 }
 
 export function DashboardPage() {
   const { user, token } = useAuth()
@@ -23,6 +26,10 @@ export function DashboardPage() {
   const [articleToDelete, setArticleToDelete] = useState<DashboardArticle | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deletedArticleIds, setDeletedArticleIds] = useState<number[]>([])
+  const [activity, setActivity] = useState<RecentActivity[]>([])
+  const [activityMeta, setActivityMeta] = useState<PaginationMeta>(emptyActivityMeta)
+  const [activityPage, setActivityPage] = useState(1)
+  const [isLoadingActivity, setIsLoadingActivity] = useState(Boolean(token))
 
   const dashboardArticles = useMemo(() => {
     return dashboardMetrics?.articleMetrics.filter((article) => !deletedArticleIds.includes(article.id)) ?? []
@@ -46,15 +53,50 @@ export function DashboardPage() {
       .finally(() => setIsLoadingMetrics(false))
   }, [token, deletedArticleIds])
 
+  useEffect(() => {
+    if (!token) {
+      return
+    }
+
+    let isMounted = true
+    setIsLoadingActivity(true)
+
+    getMyRecentActivity(token, { page: activityPage, perPage: ACTIVITY_PER_PAGE })
+      .then(({ activity, meta }) => {
+        if (isMounted) {
+          setActivity(activity)
+          setActivityMeta(meta ?? emptyActivityMeta)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setActivity([])
+          setActivityMeta(emptyActivityMeta)
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingActivity(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [token, activityPage, deletedArticleIds])
+
   const stats = useMemo(() => {
     const totals = dashboardMetrics?.totals
 
     return [
       { label: "Total de Artigos", value: totals?.articles ?? 0, icon: FileText },
-      { label: "Views", value: totals?.views ?? 0, icon: Eye },
+      { label: "Engajamento", value: totals?.engagement ?? 0, icon: MessageSquare },
       { label: "Curtidas", value: totals?.likes ?? 0, icon: Heart },
-      { label: "Leituras", value: totals?.reads ?? 0, icon: BookOpen },
-      { label: "Tempo medio real", value: formatDuration(totals?.averageReadSeconds ?? 0), icon: TrendingUp },
+      {
+        label: "Tempo medio de leitura",
+        value: `${totals?.averageReadingTimeMinutes ?? 0} min`,
+        icon: TrendingUp,
+      },
     ]
   }, [dashboardMetrics])
 
@@ -187,17 +229,42 @@ export function DashboardPage() {
 
         <aside className="surface-panel recent-activity">
           <h2>Atividade Recente</h2>
-          {dashboardMetrics?.recentActivity.map((activity) => (
-            <article key={activity.id}>
-              <Avatar name={user?.name ?? "Autor"} url={user?.avatarUrl} />
-              <p>
-                <strong>{user?.name ?? "Autor"}</strong> {activity.type === "published" ? "publicou" : "atualizou"}{" "}
-                {activity.title}
-                <span>{activity.category ?? "Sem categoria"} - {formatDate(activity.updatedAt)}</span>
-              </p>
-            </article>
-          ))}
-          {!isLoadingMetrics && dashboardMetrics?.recentActivity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
+          {isLoadingActivity ? <StateBlock title="Carregando atividade" /> : null}
+          {!isLoadingActivity && activity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
+          {!isLoadingActivity
+            ? activity.map((item) => (
+                <article key={item.id}>
+                  <Avatar name={item.author.name} url={item.author.avatarUrl} />
+                  <p>
+                    <strong>{item.author.name}</strong> comentou em <em>{item.article.title}</em>
+                    <span>{formatRelativeTime(item.createdAt)}</span>
+                  </p>
+                </article>
+              ))
+            : null}
+          {!isLoadingActivity && activityMeta.totalPages > 1 ? (
+            <div className="pagination-row dashboard-pagination">
+              <button
+                type="button"
+                className="button-secondary"
+                disabled={activityPage <= 1}
+                onClick={() => setActivityPage((current) => current - 1)}
+              >
+                Anterior
+              </button>
+              <span>
+                Pagina {activityMeta.page} de {activityMeta.totalPages}
+              </span>
+              <button
+                type="button"
+                className="button-secondary"
+                disabled={activityPage >= activityMeta.totalPages}
+                onClick={() => setActivityPage((current) => current + 1)}
+              >
+                Proxima
+              </button>
+            </div>
+          ) : null}
         </aside>
       </div>
 
