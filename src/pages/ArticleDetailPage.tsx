@@ -1,9 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { ArrowLeft, Heart, Share2 } from "lucide-react"
+import { ArrowLeft, Eye, Heart, MessageSquare, Share2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
-import { ArticleMeta } from "@/components/articles/ArticleMeta"
 import { ShareModal } from "@/components/articles/ShareModal"
 import { Avatar } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
@@ -288,7 +287,20 @@ export function ArticleDetailPage() {
             </button>
           </div>
         </div>
-        <ArticleMeta article={article} />
+        <div className="detail-stats">
+          <span>
+            <Heart size={16} />
+            {article.likesCount} {article.likesCount === 1 ? "curtida" : "curtidas"}
+          </span>
+          <span>
+            <Eye size={16} />
+            {article.viewsCount} {article.viewsCount === 1 ? "visualizacao" : "visualizacoes"}
+          </span>
+          <span>
+            <MessageSquare size={16} />
+            {article.commentsCount} {article.commentsCount === 1 ? "comentario" : "comentarios"}
+          </span>
+        </div>
       </header>
 
       <img
@@ -312,7 +324,7 @@ export function ArticleDetailPage() {
       </div>
 
       <section className="comments-section">
-        <h2>Comentarios ({commentsMeta.total})</h2>
+        <h2>{commentsMeta.total === 1 ? "Comentario" : "Comentarios"} ({commentsMeta.total})</h2>
         <label className="search-box comments-search">
           <input
             value={commentSearch}
