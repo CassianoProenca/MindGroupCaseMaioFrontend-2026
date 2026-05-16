@@ -236,7 +236,7 @@ export function DashboardPage() {
                 <article key={item.id}>
                   <Avatar name={item.author.name} url={item.author.avatarUrl} />
                   <p>
-                    <strong>{item.author.name}</strong> comentou em <em>{item.article.title}</em>
+                    <strong>{item.author.name}</strong> comentou em <strong>{item.article.title}</strong>
                     <span>{formatRelativeTime(item.createdAt)}</span>
                   </p>
                 </article>
