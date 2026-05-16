@@ -14,7 +14,7 @@ export function DeleteArticleModal({ article, isDeleting, onClose, onConfirm }: 
         <button type="button" className="button-secondary" onClick={onClose}>
           Cancelar
         </button>
-        <button type="button" className="button-danger" onClick={onConfirm} disabled={isDeleting}>
+        <button type="button" className="button-danger button-danger--solid" onClick={onConfirm} disabled={isDeleting}>
           {isDeleting ? "Excluindo..." : "Excluir"}
         </button>
       </div>
