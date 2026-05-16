@@ -10,12 +10,11 @@ import { formatDate, formatRelativeTime, getArticleImage, getArticleImageFallbac
 import { deleteArticle } from "@/services/articles"
 import { getApiErrorMessage } from "@/services/api"
 import { getMyDashboardMetrics, getMyRecentActivity } from "@/services/profile"
-import type { DashboardMetricsResponse, PaginationMeta, RecentActivity } from "@/types/api"
+import type { DashboardMetricsResponse, RecentActivity } from "@/types/api"
 
 type DashboardArticle = DashboardMetricsResponse["metrics"]["articleMetrics"][number]
 
-const ACTIVITY_PER_PAGE = 3
-const emptyActivityMeta: PaginationMeta = { page: 1, perPage: ACTIVITY_PER_PAGE, total: 0, totalPages: 1 }
+const ACTIVITY_PER_PAGE = 5
 
 export function DashboardPage() {
   const { user, token } = useAuth()
@@ -27,7 +26,7 @@ export function DashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deletedArticleIds, setDeletedArticleIds] = useState<number[]>([])
   const [activity, setActivity] = useState<RecentActivity[]>([])
-  const [activityMeta, setActivityMeta] = useState<PaginationMeta>(emptyActivityMeta)
+  const [activityTotal, setActivityTotal] = useState(0)
   const [activityPage, setActivityPage] = useState(1)
   const [isLoadingActivity, setIsLoadingActivity] = useState(Boolean(token))
 
@@ -61,17 +60,19 @@ export function DashboardPage() {
     let isMounted = true
     setIsLoadingActivity(true)
 
-    getMyRecentActivity(token, { page: activityPage, perPage: ACTIVITY_PER_PAGE })
-      .then(({ activity, meta }) => {
+    getMyRecentActivity(token, { page: 1, perPage: ACTIVITY_PER_PAGE })
+      .then(({ activity: nextActivity, meta }) => {
         if (isMounted) {
-          setActivity(activity)
-          setActivityMeta(meta ?? emptyActivityMeta)
+          setActivity(nextActivity)
+          setActivityTotal(meta?.total ?? nextActivity.length)
+          setActivityPage(1)
         }
       })
       .catch(() => {
         if (isMounted) {
           setActivity([])
-          setActivityMeta(emptyActivityMeta)
+          setActivityTotal(0)
+          setActivityPage(1)
         }
       })
       .finally(() => {
@@ -83,7 +84,25 @@ export function DashboardPage() {
     return () => {
       isMounted = false
     }
-  }, [token, activityPage, deletedArticleIds])
+  }, [token, deletedArticleIds])
+
+  async function handleLoadMoreActivity() {
+    if (!token || isLoadingActivity || activity.length >= activityTotal) {
+      return
+    }
+
+    setIsLoadingActivity(true)
+
+    try {
+      const nextPage = activityPage + 1
+      const response = await getMyRecentActivity(token, { page: nextPage, perPage: ACTIVITY_PER_PAGE })
+      setActivity((current) => [...current, ...response.activity])
+      setActivityTotal(response.meta?.total ?? activityTotal)
+      setActivityPage(nextPage)
+    } finally {
+      setIsLoadingActivity(false)
+    }
+  }
 
   const stats = useMemo(() => {
     const totals = dashboardMetrics?.totals
@@ -236,41 +255,26 @@ export function DashboardPage() {
 
         <aside className="surface-panel recent-activity">
           <h2>Atividade Recente</h2>
-          {isLoadingActivity ? <StateBlock title="Carregando atividade" /> : null}
+          {isLoadingActivity && activity.length === 0 ? <StateBlock title="Carregando atividade" /> : null}
           {!isLoadingActivity && activity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
-          {!isLoadingActivity
-            ? activity.map((item) => (
-                <article key={item.id}>
-                  <Avatar name={item.author.name} url={item.author.avatarUrl} />
-                  <p>
-                    <strong>{item.author.name}</strong> comentou em <strong>{item.article.title}</strong>
-                    <span>{formatRelativeTime(item.createdAt)}</span>
-                  </p>
-                </article>
-              ))
-            : null}
-          {!isLoadingActivity && activityMeta.totalPages > 1 ? (
-            <div className="pagination-row dashboard-pagination">
-              <button
-                type="button"
-                className="button-secondary"
-                disabled={activityPage <= 1}
-                onClick={() => setActivityPage((current) => current - 1)}
-              >
-                Anterior
-              </button>
-              <span>
-                Pagina {activityMeta.page} de {activityMeta.totalPages}
-              </span>
-              <button
-                type="button"
-                className="button-secondary"
-                disabled={activityPage >= activityMeta.totalPages}
-                onClick={() => setActivityPage((current) => current + 1)}
-              >
-                Proxima
-              </button>
-            </div>
+          {activity.map((item) => (
+            <article key={item.id}>
+              <Avatar name={item.author.name} url={item.author.avatarUrl} />
+              <p>
+                <strong>{item.author.name}</strong> comentou em <strong>{item.article.title}</strong>
+                <span>{formatRelativeTime(item.createdAt)}</span>
+              </p>
+            </article>
+          ))}
+          {activity.length < activityTotal ? (
+            <button
+              type="button"
+              className="button-secondary recent-activity-more"
+              disabled={isLoadingActivity}
+              onClick={handleLoadMoreActivity}
+            >
+              {isLoadingActivity ? "Carregando..." : "Carregar mais"}
+            </button>
           ) : null}
         </aside>
       </div>

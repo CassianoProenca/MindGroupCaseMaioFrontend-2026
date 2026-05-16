@@ -1335,9 +1335,15 @@
   gap: 6px;
 }
 
-.comments-more {
+.comments-more,
+.recent-activity-more {
   width: 100%;
   margin-top: 18px;
+}
+
+.recent-activity-more {
+  margin: 18px 24px 24px;
+  width: calc(100% - 48px);
 }
 
 .dashboard-heading {
