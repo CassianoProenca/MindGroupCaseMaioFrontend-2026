@@ -14,7 +14,7 @@ export function ArticlesPage() {
   const [page, setPage] = useState(1)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [categories, setCategories] = useState<Category[]>([])
-  const { articles, meta, isLoading, isFallback } = useArticles({
+  const { articles, meta, isLoading } = useArticles({
     categoryId: selectedCategory || undefined,
     page,
     perPage: 6,
@@ -50,8 +50,6 @@ export function ArticlesPage() {
         onQueryChange={handleQueryChange}
         onViewModeChange={setViewMode}
       />
-
-      {isFallback ? <p className="fallback-note">Mostrando conteudo local enquanto a API nao responde.</p> : null}
 
       {isLoading ? <StateBlock title="Carregando artigos">Buscando conteudo atualizado.</StateBlock> : null}
 

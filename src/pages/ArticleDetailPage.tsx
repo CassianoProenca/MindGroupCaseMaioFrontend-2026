@@ -6,7 +6,6 @@ import { ArticleMeta } from "@/components/articles/ArticleMeta"
 import { Badge } from "@/components/ui/Badge"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
-import { mockArticles } from "@/data/mockArticles"
 import { getReaderId, hasViewedArticle, markArticleAsViewed, useArticleReadTracker } from "@/hooks/useArticleReadTracker"
 import { formatDate, getArticleImage, getArticleImageFallback } from "@/lib/format"
 import { getApiErrorMessage } from "@/services/api"
@@ -79,13 +78,13 @@ export function ArticleDetailPage() {
         if (articleResult.status === "fulfilled") {
           const nextArticle = articleResult.value.article
           const viewCount =
-            viewResult && viewResult.status === "fulfilled"
+            viewResult.status === "fulfilled" && viewResult.value
               ? viewResult.value.article.viewsCount
               : nextArticle.viewsCount
           setArticle({ ...nextArticle, viewsCount: viewCount })
           markArticleAsViewed(articleId)
         } else {
-          setArticle(mockArticles.find((article) => article.id === articleId) ?? mockArticles[0])
+          setArticle(null)
         }
       })
       .finally(() => {

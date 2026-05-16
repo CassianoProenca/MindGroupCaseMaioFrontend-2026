@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 
-import { mockArticles } from "@/data/mockArticles"
 import { listArticles } from "@/services/articles"
 import type { Article, PaginationMeta } from "@/types/api"
 
@@ -11,18 +10,15 @@ type UseArticlesParams = {
   search?: string
 }
 
-const fallbackMeta: PaginationMeta = {
-  page: 1,
-  perPage: mockArticles.length,
-  total: mockArticles.length,
-  totalPages: 1,
+function emptyMeta(perPage: number): PaginationMeta {
+  return { page: 1, perPage, total: 0, totalPages: 1 }
 }
 
 export function useArticles(params: UseArticlesParams = {}) {
-  const [articles, setArticles] = useState<Article[]>(mockArticles)
-  const [meta, setMeta] = useState<PaginationMeta>(fallbackMeta)
+  const perPage = params.perPage ?? 10
+  const [articles, setArticles] = useState<Article[]>([])
+  const [meta, setMeta] = useState<PaginationMeta>(() => emptyMeta(perPage))
   const [isLoading, setIsLoading] = useState(true)
-  const [isFallback, setIsFallback] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -32,15 +28,13 @@ export function useArticles(params: UseArticlesParams = {}) {
       .then(({ articles, meta }) => {
         if (isMounted) {
           setArticles(articles)
-          setMeta(meta ?? fallbackMeta)
-          setIsFallback(false)
+          setMeta(meta ?? emptyMeta(perPage))
         }
       })
       .catch(() => {
         if (isMounted) {
-          setArticles(mockArticles)
-          setMeta(fallbackMeta)
-          setIsFallback(true)
+          setArticles([])
+          setMeta(emptyMeta(perPage))
         }
       })
       .finally(() => {
@@ -54,5 +48,5 @@ export function useArticles(params: UseArticlesParams = {}) {
     }
   }, [params.categoryId, params.page, params.perPage, params.search])
 
-  return { articles, meta, isLoading, isFallback }
+  return { articles, meta, isLoading }
 }
