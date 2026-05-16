@@ -255,17 +255,19 @@ export function DashboardPage() {
 
         <aside className="surface-panel recent-activity">
           <h2>Atividade Recente</h2>
-          {isLoadingActivity && activity.length === 0 ? <StateBlock title="Carregando atividade" /> : null}
-          {!isLoadingActivity && activity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
-          {activity.map((item) => (
-            <article key={item.id}>
-              <Avatar name={item.author.name} url={item.author.avatarUrl} />
-              <p>
-                <strong>{item.author.name}</strong> comentou em <strong>{item.article.title}</strong>
-                <span>{formatRelativeTime(item.createdAt)}</span>
-              </p>
-            </article>
-          ))}
+          <div className="recent-activity-body">
+            {isLoadingActivity && activity.length === 0 ? <StateBlock title="Carregando atividade" /> : null}
+            {!isLoadingActivity && activity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
+            {activity.map((item) => (
+              <article key={item.id}>
+                <Avatar name={item.author.name} url={item.author.avatarUrl} />
+                <p>
+                  <strong>{item.author.name}</strong> comentou em <strong>{item.article.title}</strong>
+                  <span>{formatRelativeTime(item.createdAt)}</span>
+                </p>
+              </article>
+            ))}
+          </div>
           {activity.length < activityTotal ? (
             <button
               type="button"
