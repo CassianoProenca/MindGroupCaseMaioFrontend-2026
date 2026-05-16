@@ -19,7 +19,7 @@ type ArticleFormProps = {
 export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: ArticleFormProps) {
   const [title, setTitle] = useState(article?.title ?? "")
   const [summary, setSummary] = useState(article?.summary ?? "")
-  const [category, setCategory] = useState(article?.category ?? "Desenvolvimento web")
+  const [category, setCategory] = useState(article?.category ?? "")
   const [tags, setTags] = useState(article?.tags?.join(", ") ?? "")
   const [content, setContent] = useState(article?.content ?? "")
   const [file, setFile] = useState<File | null>(null)
@@ -27,7 +27,15 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
 
   useEffect(() => {
     listCategories({ perPage: 50 })
-      .then(({ categories }) => setCategories(categories))
+      .then(({ categories }) => {
+        setCategories(categories)
+        setCategory((current) => {
+          if (current) {
+            return current
+          }
+          return categories.length > 0 ? categories[0].name : ""
+        })
+      })
       .catch(() => setCategories([]))
   }, [])
 
@@ -72,12 +80,21 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
       <label className="field-shell">
         <span>Categoria *</span>
         <select className="text-field" name="category" value={category} onChange={(event) => setCategory(event.target.value)}>
-          {[category, ...categories.map((item) => item.name), "Desenvolvimento web", "Inteligencia Artificial", "Backend", "Frontend", "DevOps"]
-            .filter(Boolean)
-            .filter((item, index, all) => all.indexOf(item) === index)
-            .map((item) => (
-              <option key={item}>{item}</option>
-            ))}
+          {categories.length === 0 ? (
+            <option value="" disabled>
+              Carregando categorias...
+            </option>
+          ) : null}
+          {article?.category && !categories.some((item) => item.name === article.category) ? (
+            <option key={article.category} value={article.category}>
+              {article.category}
+            </option>
+          ) : null}
+          {categories.map((item) => (
+            <option key={item.id} value={item.name}>
+              {item.name}
+            </option>
+          ))}
         </select>
       </label>
       <label className="field-shell">
