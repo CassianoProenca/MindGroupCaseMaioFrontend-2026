@@ -61,8 +61,8 @@ export function AuthPage({ mode }: AuthPageProps) {
   return (
     <section className="auth-page">
       <img src="/M-logo.svg" alt="" className="auth-logo" />
-      <h1>{mode === "login" ? "Entrar na Plataforma" : "Entrar na Plataforma"}</h1>
-      <p>Acesse sua conta para gerenciar seus artigos</p>
+      <h1>{mode === "login" ? "Entrar na Plataforma" : "Criar uma conta"}</h1>
+      <p>{mode === "login" ? "Acesse sua conta para gerenciar seus artigos" : "Cadastre-se para publicar seus artigos"}</p>
       <AuthCard mode={mode} error={error} isSubmitting={isSubmitting} onSubmit={handleSubmit} />
     </section>
   )
