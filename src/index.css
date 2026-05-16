@@ -503,7 +503,25 @@
 
 .social-links {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+}
+
+.social-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: var(--muted-foreground);
+  transition: color 0.15s ease;
+}
+
+.social-icon:hover {
+  color: var(--foreground);
+}
+
+.social-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .footer-bottom {
