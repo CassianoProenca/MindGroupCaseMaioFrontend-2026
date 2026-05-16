@@ -1,3 +1,4 @@
+import { Moon } from "lucide-react"
 import { Link, NavLink } from "react-router-dom"
 
 import { UserMenu } from "@/components/auth/UserMenu"
@@ -17,7 +18,7 @@ export function Header() {
         <NavLink to="/artigos">Artigos</NavLink>
         <span className="nav-divider" />
         <button type="button" className="icon-button" aria-label="Alternar tema">
-          ☾
+          <Moon size={18} />
         </button>
         {isAuthenticated ? (
           <UserMenu />
