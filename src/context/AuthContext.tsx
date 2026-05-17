@@ -1,11 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 
+import { decodeToken, isTokenExpired } from "@/lib/jwt"
 import * as authService from "@/services/auth"
 import type { User } from "@/types/api"
 
 const TOKEN_KEY = "mind_blog_token"
-const USER_KEY = "mind_blog_user"
+const LEGACY_USER_KEY = "mind_blog_user"
 
 type AuthContextValue = {
   user: User | null
@@ -16,28 +17,35 @@ type AuthContextValue = {
   register: (payload: authService.RegisterPayload) => Promise<void>
   resetPassword: (payload: authService.ResetPasswordPayload) => Promise<void>
   logout: () => void
-  updateUser: (nextUser: User) => void
+  applyToken: (token: string) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function getStoredUser() {
-  const storedUser = window.localStorage.getItem(USER_KEY)
+function readInitialToken() {
+  const stored = window.localStorage.getItem(TOKEN_KEY)
+  window.localStorage.removeItem(LEGACY_USER_KEY)
 
-  if (!storedUser) {
+  if (!stored) {
     return null
   }
-
-  try {
-    return JSON.parse(storedUser) as User
-  } catch {
+  if (isTokenExpired(stored)) {
+    window.localStorage.removeItem(TOKEN_KEY)
     return null
   }
+  return stored
+}
+
+function userFromToken(token: string | null): User | null {
+  if (!token) {
+    return null
+  }
+  return decodeToken(token)?.user ?? null
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_KEY))
-  const [user, setUser] = useState<User | null>(() => getStoredUser())
+  const [token, setToken] = useState<string | null>(() => readInitialToken())
+  const [user, setUser] = useState<User | null>(() => userFromToken(token))
   const [isLoading, setIsLoading] = useState(Boolean(token))
 
   useEffect(() => {
@@ -49,22 +57,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .getMe(token)
       .then(({ user: currentUser }) => {
         setUser(currentUser)
-        window.localStorage.setItem(USER_KEY, JSON.stringify(currentUser))
       })
       .catch(() => {
         window.localStorage.removeItem(TOKEN_KEY)
-        window.localStorage.removeItem(USER_KEY)
         setToken(null)
         setUser(null)
       })
       .finally(() => setIsLoading(false))
   }, [token])
 
-  function persistSession(nextToken: string, nextUser: User) {
-    setToken(nextToken)
-    setUser(nextUser)
+  function persistSession(nextToken: string) {
     window.localStorage.setItem(TOKEN_KEY, nextToken)
-    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
+    setToken(nextToken)
+    setUser(userFromToken(nextToken))
   }
 
   const value = useMemo<AuthContextValue>(
@@ -75,25 +80,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login: async (payload) => {
         const response = await authService.login(payload)
-        persistSession(response.token, response.user)
+        persistSession(response.token)
       },
       register: async (payload) => {
         const response = await authService.register(payload)
-        persistSession(response.token, response.user)
+        persistSession(response.token)
       },
       resetPassword: async (payload) => {
         const response = await authService.resetPassword(payload)
-        persistSession(response.token, response.user)
+        persistSession(response.token)
       },
       logout: () => {
         setToken(null)
         setUser(null)
         window.localStorage.removeItem(TOKEN_KEY)
-        window.localStorage.removeItem(USER_KEY)
       },
-      updateUser: (nextUser) => {
-        setUser(nextUser)
-        window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
+      applyToken: (nextToken) => {
+        persistSession(nextToken)
       },
     }),
     [isLoading, token, user],

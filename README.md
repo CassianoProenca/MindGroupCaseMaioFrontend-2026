@@ -143,7 +143,7 @@ Perfil
 
 ## Persistencia de sessao
 
-Token JWT e dados do usuario ficam em `localStorage` (`mind_blog_token`, `mind_blog_user`). Ao carregar, o `AuthProvider` revalida o token chamando `/auth/me` — se falhar, limpa a sessao automaticamente.
+Apenas o token JWT fica em `localStorage` (`mind_blog_token`). O payload do token carrega o user publico (id, name, email, bio, avatarUrl, role), entao o `AuthProvider` deriva o usuario decodificando o token no boot e revalida em background chamando `/auth/me` — se falhar, limpa a sessao automaticamente. Apos editar o perfil, o backend devolve um token novo com os dados atualizados.
 
 ## Observacoes
 

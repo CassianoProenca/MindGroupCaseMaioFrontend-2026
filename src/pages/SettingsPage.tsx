@@ -19,7 +19,7 @@ function formatRole(role: string) {
 }
 
 export function SettingsPage() {
-  const { user, token, updateUser } = useAuth()
+  const { user, token, applyToken } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [name, setName] = useState(user?.name ?? "")
   const [bio, setBio] = useState(user?.bio ?? "")
@@ -59,7 +59,7 @@ export function SettingsPage() {
     try {
       const response = await updateMyProfile({ name, bio, avatarUrl }, token)
       setProfile(response.profile)
-      updateUser(response.profile)
+      applyToken(response.token)
       setSuccess("Perfil atualizado com sucesso.")
     } catch (error) {
       setError(getApiErrorMessage(error))

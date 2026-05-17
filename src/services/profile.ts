@@ -2,6 +2,7 @@ import {
   dashboardMetricsSchema,
   profilePayloadSchema,
   profileResponseSchema,
+  profileUpdateResponseSchema,
   recentActivityResponseSchema,
   type ProfilePayload,
 } from "@/types/api"
@@ -21,7 +22,7 @@ export async function updateMyProfile(payload: ProfilePayload, token: string) {
   try {
     const validatedPayload = profilePayloadSchema.parse(payload)
     const response = await api.put("/profile/me", validatedPayload, authConfig(token))
-    return parseApiResponse(profileResponseSchema, response.data)
+    return parseApiResponse(profileUpdateResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
   }

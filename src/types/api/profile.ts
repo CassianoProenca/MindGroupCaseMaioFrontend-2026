@@ -14,5 +14,11 @@ export const profileResponseSchema = z.object({
   profile: profileSchema,
 })
 
+export const profileUpdateResponseSchema = z.object({
+  profile: profileSchema,
+  token: z.string().min(1),
+})
+
 export type Profile = z.infer<typeof profileSchema>
 export type ProfileResponse = z.infer<typeof profileResponseSchema>
+export type ProfileUpdateResponse = z.infer<typeof profileUpdateResponseSchema>
