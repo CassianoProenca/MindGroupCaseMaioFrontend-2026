@@ -1,8 +1,8 @@
-import type { FormEvent } from "react"
+import type { FormEvent, KeyboardEvent } from "react"
 import { useEffect, useMemo, useState } from "react"
+import { X } from "lucide-react"
 import { Link } from "react-router-dom"
 
-import { Badge } from "@/components/ui/Badge"
 import { TextArea, TextInput } from "@/components/ui/FormField"
 import { getArticleImage, getReadingTime } from "@/lib/format"
 import { listCategories } from "@/services/articles"
@@ -20,7 +20,8 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
   const [title, setTitle] = useState(article?.title ?? "")
   const [summary, setSummary] = useState(article?.summary ?? "")
   const [category, setCategory] = useState(article?.category ?? "")
-  const [tags, setTags] = useState(article?.tags?.join(", ") ?? "")
+  const [tags, setTags] = useState<string[]>(article?.tags ?? [])
+  const [tagDraft, setTagDraft] = useState("")
   const [content, setContent] = useState(article?.content ?? "")
   const [file, setFile] = useState<File | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -47,10 +48,25 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
     return article ? getArticleImage(article.id, article.bannerUrl) : null
   }, [article, file])
 
-  const tagList = tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean)
+  function addTag() {
+    const trimmed = tagDraft.trim()
+    if (!trimmed) {
+      return
+    }
+    setTags((current) => (current.includes(trimmed) ? current : [...current, trimmed]))
+    setTagDraft("")
+  }
+
+  function removeTag(tag: string) {
+    setTags((current) => current.filter((item) => item !== tag))
+  }
+
+  function handleTagKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      addTag()
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -110,18 +126,39 @@ export function ArticleForm({ article, error, isSubmitting, mode, onSubmit }: Ar
         {previewUrl ? <img className="banner-preview" src={previewUrl} alt="" /> : null}
       </label>
       <div className="tags-field">
-        <TextInput
-          name="tags"
-          label="Tags"
-          placeholder="Typescript, Backend, IA"
-          value={tags}
-          onChange={(event) => setTags(event.target.value)}
-        />
-        <div>
-          {tagList.map((tag) => (
-            <Badge key={tag}>{tag}</Badge>
-          ))}
+        <span className="field-label-row">
+          <span>Tags</span>
+        </span>
+        <div className="tags-input-row">
+          <input
+            className="text-field"
+            value={tagDraft}
+            onChange={(event) => setTagDraft(event.target.value)}
+            onKeyDown={handleTagKeyDown}
+            placeholder="Typescript, Backend, IA"
+          />
+          <button type="button" className="button-secondary" onClick={addTag}>
+            Adicionar
+          </button>
         </div>
+        {tags.length > 0 ? (
+          <div className="tags-chip-row">
+            {tags.map((tag) => (
+              <span key={tag} className="ui-badge ui-badge--muted tag-chip">
+                {tag}
+                <button
+                  type="button"
+                  className="tag-chip-remove"
+                  onClick={() => removeTag(tag)}
+                  aria-label={`Remover ${tag}`}
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <input type="hidden" name="tags" value={tags.join(",")} />
       </div>
       <TextArea
         name="content"

@@ -7,10 +7,16 @@ import { Avatar } from "@/components/ui/Avatar"
 import { TextArea, TextInput } from "@/components/ui/FormField"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
-import { formatDate } from "@/lib/format"
+import { formatDateNumeric } from "@/lib/format"
 import { getApiErrorMessage } from "@/services/api"
 import { getMyProfile, updateMyProfile } from "@/services/profile"
 import type { Profile } from "@/types/api"
+
+function formatRole(role: string) {
+  if (!role) return "-"
+  const lower = role.toLowerCase()
+  return lower.charAt(0).toUpperCase() + lower.slice(1)
+}
 
 export function SettingsPage() {
   const { user, token, updateUser } = useAuth()
@@ -69,8 +75,8 @@ export function SettingsPage() {
         Voltar ao Dashboard
       </Link>
       <div className="page-rule" />
-      <h1 className="page-title">Configuracoes do Perfil</h1>
-      <p className="page-subtitle">Gerencie suas informacoes pessoais</p>
+      <h1 className="page-title">Configurações do Perfil</h1>
+      <p className="page-subtitle">Gerencie suas informações pessoais</p>
 
       {isLoading ? (
         <StateBlock title="Carregando perfil" />
@@ -112,20 +118,20 @@ export function SettingsPage() {
             hint={`${bio.length}/500 caracteres`}
           />
           <div className="account-info">
-            <strong>Informacoes da conta</strong>
+            <strong>Informações da conta</strong>
             <div>
               <span>Tipo de conta</span>
-              <p>{profile?.role ?? "author"}</p>
+              <p>{formatRole(profile?.role ?? "AUTHOR")}</p>
             </div>
             <div>
               <span>Membro desde</span>
-              <p>{profile?.createdAt ? formatDate(profile.createdAt) : "-"}</p>
+              <p>{profile?.createdAt ? formatDateNumeric(profile.createdAt) : "-"}</p>
             </div>
           </div>
           {error ? <p className="form-error">{error}</p> : null}
           {success ? <p className="form-success">{success}</p> : null}
           <button type="submit" className="button-primary" disabled={isSubmitting}>
-            {isSubmitting ? "Salvando..." : "Salvar Alteracoes"}
+            {isSubmitting ? "Salvando..." : "Salvar Alterações"}
           </button>
         </form>
       )}

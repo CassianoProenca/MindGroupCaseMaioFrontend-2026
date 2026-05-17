@@ -47,8 +47,8 @@ export function HomePage() {
         <h2 className="section-title">Artigos Recentes</h2>
         <p className="section-subtitle">Conteudo recente da comunidade</p>
         <div className="recent-grid">
-          {recent.map((article, index) => (
-            <ArticleCard key={article.id} article={article} highlighted={index === 1} />
+          {recent.map((article) => (
+            <ArticleCard key={article.id} article={article} compact />
           ))}
         </div>
       </section>

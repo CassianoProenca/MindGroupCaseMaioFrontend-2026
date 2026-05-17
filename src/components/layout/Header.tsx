@@ -17,7 +17,7 @@ export function Header() {
         <NavLink to="/">Home</NavLink>
         <NavLink to="/artigos">Artigos</NavLink>
         <span className="nav-divider" />
-        <button type="button" className="icon-button" aria-label="Alternar tema">
+        <button type="button" className="icon-button icon-button--bare" aria-label="Alternar tema">
           <Moon size={18} />
         </button>
         {isAuthenticated ? (

@@ -1,11 +1,30 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333"
 
+const MONTH_ABBR_PT_BR = [
+  "jan",
+  "fev",
+  "mar",
+  "abr",
+  "mai",
+  "jun",
+  "jul",
+  "ago",
+  "set",
+  "out",
+  "nov",
+  "dez",
+]
+
 export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value))
+  const date = new Date(value)
+  return `${date.getDate()} ${MONTH_ABBR_PT_BR[date.getMonth()]} ${date.getFullYear()}`
+}
+
+export function formatDateNumeric(value: string) {
+  const date = new Date(value)
+  const day = String(date.getDate()).padStart(2, "0")
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  return `${day}/${month}/${date.getFullYear()}`
 }
 
 const relativeFormatter = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" })
