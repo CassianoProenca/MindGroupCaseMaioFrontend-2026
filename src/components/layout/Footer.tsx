@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom"
 
+import { BrandLogo } from "@/components/ui/BrandLogo"
+
 const SOCIAL_LINKS = [
   {
     name: "LinkedIn",
@@ -23,7 +25,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-grid">
         <div>
-          <img src="/M-logo.svg" alt="" className="footer-logo" />
+          <BrandLogo className="footer-logo" />
           <p>Seu portal de tecnologia com artigos, tutoriais e novidades do mundo tech.</p>
         </div>
 

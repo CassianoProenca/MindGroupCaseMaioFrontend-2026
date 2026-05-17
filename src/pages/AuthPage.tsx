@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import { AuthCard } from "@/components/auth/AuthCard"
+import { BrandLogo } from "@/components/ui/BrandLogo"
 import { useAuth } from "@/context/AuthContext"
 import { getApiErrorMessage } from "@/services/api"
 
@@ -60,7 +61,7 @@ export function AuthPage({ mode }: AuthPageProps) {
 
   return (
     <section className="auth-page">
-      <img src="/M-logo.svg" alt="" className="auth-logo" />
+      <BrandLogo className="auth-logo" />
       <h1>{mode === "login" ? "Entrar na Plataforma" : "Criar uma conta"}</h1>
       <p>{mode === "login" ? "Acesse sua conta para gerenciar seus artigos" : "Cadastre-se para publicar seus artigos"}</p>
       <AuthCard mode={mode} error={error} isSubmitting={isSubmitting} onSubmit={handleSubmit} />

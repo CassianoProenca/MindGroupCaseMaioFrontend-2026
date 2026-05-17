@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { KeyRound } from "lucide-react"
 
+import { BrandLogo } from "@/components/ui/BrandLogo"
 import { TextInput } from "@/components/ui/FormField"
 import { useAuth } from "@/context/AuthContext"
 import { ApiError, getApiErrorMessage } from "@/services/api"
@@ -50,7 +51,7 @@ export function ResetPasswordPage() {
 
   return (
     <section className="auth-page">
-      <img src="/M-logo.svg" alt="" className="auth-logo" />
+      <BrandLogo className="auth-logo" />
       <h1>Redefinir senha</h1>
       <p>Escolha uma nova senha para a sua conta.</p>
 

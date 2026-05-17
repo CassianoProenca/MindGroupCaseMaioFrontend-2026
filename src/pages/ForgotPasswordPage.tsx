@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Mail } from "lucide-react"
 
+import { BrandLogo } from "@/components/ui/BrandLogo"
 import { TextInput } from "@/components/ui/FormField"
 import { getApiErrorMessage } from "@/services/api"
 import { forgotPassword } from "@/services/auth"
@@ -36,7 +37,7 @@ export function ForgotPasswordPage() {
 
   return (
     <section className="auth-page">
-      <img src="/M-logo.svg" alt="" className="auth-logo" />
+      <BrandLogo className="auth-logo" />
       <h1>Esqueceu sua senha?</h1>
       <p>Informe o email da sua conta e enviaremos um link para redefinir a senha.</p>
 
