@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState, type UIEvent } from "react"
-import { Edit3, FileText, FolderTree, Heart, MessageSquare, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
+import { FolderTree, Plus, Settings } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { DeleteArticleModal } from "@/components/articles/DeleteArticleModal"
-import { Avatar } from "@/components/ui/Avatar"
-import { StateBlock } from "@/components/ui/StateBlock"
+import { DashboardActivity } from "@/components/dashboard/DashboardActivity"
+import { DashboardArticles, type DashboardArticle } from "@/components/dashboard/DashboardArticles"
+import { DashboardStats } from "@/components/dashboard/DashboardStats"
 import { useAuth } from "@/context/AuthContext"
-import { formatDate, formatRelativeTime, getArticleImage, getArticleImageFallback, getExcerpt } from "@/lib/format"
 import { deleteArticle } from "@/services/articles"
 import { getApiErrorMessage } from "@/services/api"
 import { getMyDashboardMetrics, getMyRecentActivity } from "@/services/profile"
 import type { DashboardMetricsResponse, RecentActivity } from "@/types/api"
 
-type DashboardArticle = DashboardMetricsResponse["metrics"]["articleMetrics"][number]
-
+const ARTICLES_PER_PAGE = 4
 const ACTIVITY_PER_PAGE = 5
 
 export function DashboardPage() {
@@ -33,8 +32,8 @@ export function DashboardPage() {
   const dashboardArticles = useMemo(() => {
     return dashboardMetrics?.articleMetrics.filter((article) => !deletedArticleIds.includes(article.id)) ?? []
   }, [dashboardMetrics, deletedArticleIds])
-  const dashboardTotalPages = Math.max(1, Math.ceil(dashboardArticles.length / 4))
-  const visibleDashboardArticles = dashboardArticles.slice((page - 1) * 4, page * 4)
+  const dashboardTotalPages = Math.max(1, Math.ceil(dashboardArticles.length / ARTICLES_PER_PAGE))
+  const visibleDashboardArticles = dashboardArticles.slice((page - 1) * ARTICLES_PER_PAGE, page * ARTICLES_PER_PAGE)
 
   useEffect(() => {
     if (!token) {
@@ -112,25 +111,6 @@ export function DashboardPage() {
     }
   }
 
-  const stats = useMemo(() => {
-    const totals = dashboardMetrics?.totals
-
-    return [
-      { label: "Total de Artigos", value: totals?.articles ?? 0, icon: FileText },
-      { label: "Engajamento", value: totals?.engagement ?? 0, icon: MessageSquare },
-      { label: "Curtidas", value: totals?.likes ?? 0, icon: Heart },
-      {
-        label: "Tempo medio de leitura",
-        value: `${totals?.averageReadingTimeMinutes ?? 0} min`,
-        icon: TrendingUp,
-      },
-    ]
-  }, [dashboardMetrics])
-
-  function getArticleMetrics(articleId: number) {
-    return dashboardMetrics?.articleMetrics.find((article) => article.id === articleId)
-  }
-
   async function handleDelete() {
     if (!articleToDelete || !token) {
       return
@@ -170,119 +150,28 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="stats-grid">
-        {isLoadingMetrics ? <StateBlock title="Carregando metricas" /> : null}
-        {metricsError ? <p className="form-error">{metricsError}</p> : null}
-        {!isLoadingMetrics
-          ? stats.map((item) => {
-              const Icon = item.icon
-              return (
-                <article className="stat-card" key={item.label}>
-                  <div>
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
-                  <Icon size={24} />
-                </article>
-              )
-            })
-          : null}
-      </div>
+      <DashboardStats
+        totals={dashboardMetrics?.totals ?? null}
+        isLoading={isLoadingMetrics}
+        errorMessage={metricsError}
+      />
 
       <div className="dashboard-grid">
-        <section className="surface-panel dashboard-list-panel">
-          <h2>Meus Artigos</h2>
-          {isLoadingMetrics ? <StateBlock title="Carregando artigos" /> : null}
-          {!isLoadingMetrics && dashboardArticles.length === 0 ? <StateBlock title="Nenhum artigo publicado" /> : null}
-          {!isLoadingMetrics
-            ? visibleDashboardArticles.map((article) => (
-                <article className="dashboard-article" key={article.id}>
-                  <img
-                    src={getArticleImage(article.id, article.bannerUrl)}
-                    alt=""
-                    onError={(event) => {
-                      event.currentTarget.src = getArticleImageFallback(article.id)
-                    }}
-                  />
-                  <div>
-                    {(() => {
-                      const articleMetrics = getArticleMetrics(article.id)
-                      return (
-                        <>
-                          <h3>{article.title}</h3>
-                          <p>{getExcerpt(article.summary || "Sem resumo cadastrado.", 85)}</p>
-                          <span className="dashboard-article-meta">
-                            <span>{formatDate(article.publishedAt)}</span>
-                            <span aria-hidden="true">&bull;</span>
-                            <span>
-                              <MessageSquare size={14} />
-                              {articleMetrics?.commentsCount ?? article.commentsCount}
-                            </span>
-                            <span aria-hidden="true">&bull;</span>
-                            <span>
-                              <Heart size={14} />
-                              {articleMetrics?.likesCount ?? article.likesCount}
-                            </span>
-                          </span>
-                        </>
-                      )
-                    })()}
-                  </div>
-                  <div className="dashboard-row-actions">
-                    <Link to={`/artigos/${article.id}/editar`} className="button-secondary">
-                      <Edit3 size={16} />
-                      Editar
-                    </Link>
-                    <button type="button" className="button-danger" onClick={() => setArticleToDelete(article)}>
-                      <Trash2 size={16} />
-                      Excluir
-                    </button>
-                  </div>
-                </article>
-              ))
-            : null}
-          {!isLoadingMetrics && dashboardTotalPages > 1 ? (
-            <div className="pagination-row dashboard-pagination">
-              <button type="button" className="button-secondary" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-                Anterior
-              </button>
-              <span>
-                Pagina {page} de {dashboardTotalPages}
-              </span>
-              <button
-                type="button"
-                className="button-secondary"
-                disabled={page >= dashboardTotalPages}
-                onClick={() => setPage((current) => current + 1)}
-              >
-                Proxima
-              </button>
-            </div>
-          ) : null}
-        </section>
-
-        <aside className="surface-panel recent-activity">
-          <h2>Atividade Recente</h2>
-          <div className="recent-activity-body" onScroll={handleActivityScroll}>
-            {isLoadingActivity && activity.length === 0 ? <StateBlock title="Carregando atividade" /> : null}
-            {!isLoadingActivity && activity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
-            {activity.map((item) => (
-              <article key={item.id}>
-                <Avatar name={item.author.name} url={item.author.avatarUrl} />
-                <p>
-                  <strong>{item.author.name}</strong> comentou em <strong>{item.article.title}</strong>
-                  <span>{formatRelativeTime(item.createdAt)}</span>
-                </p>
-              </article>
-            ))}
-            {isLoadingActivity && activity.length > 0 ? (
-              <div className="recent-activity-loading">Carregando...</div>
-            ) : null}
-            {!isLoadingActivity && activity.length > 0 && activity.length >= activityTotal ? (
-              <div className="recent-activity-loading">Sem mais atividades.</div>
-            ) : null}
-          </div>
-        </aside>
+        <DashboardArticles
+          articles={dashboardArticles}
+          visibleArticles={visibleDashboardArticles}
+          page={page}
+          totalPages={dashboardTotalPages}
+          isLoading={isLoadingMetrics}
+          onPageChange={setPage}
+          onDelete={setArticleToDelete}
+        />
+        <DashboardActivity
+          items={activity}
+          total={activityTotal}
+          isLoading={isLoadingActivity}
+          onScroll={handleActivityScroll}
+        />
       </div>
 
       <DeleteArticleModal

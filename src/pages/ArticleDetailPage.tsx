@@ -1,67 +1,34 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { ArrowLeft, Bookmark, Eye, Heart, MessageSquare, Share2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { ArrowLeft } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
+import { ArticleContent } from "@/components/articles/ArticleContent"
+import { ArticleDetailHeader } from "@/components/articles/ArticleDetailHeader"
+import { CommentsSection } from "@/components/articles/CommentsSection"
 import { ShareModal } from "@/components/articles/ShareModal"
-import { Avatar } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
-import { getReaderId, hasViewedArticle, markArticleAsViewed, useArticleReadTracker } from "@/hooks/useArticleReadTracker"
-import { formatDate, getArticleImage, getArticleImageFallback, getReadingTime } from "@/lib/format"
-import { getApiErrorMessage } from "@/services/api"
+import { useArticleEngagement } from "@/hooks/useArticleEngagement"
 import {
-  bookmarkArticle,
-  createComment,
-  getArticle,
-  getArticleBookmarkStatus,
-  getArticleLikeStatus,
-  likeArticle,
-  listComments,
-  registerArticleView,
-  unbookmarkArticle,
-  unlikeArticle,
-} from "@/services/articles"
-import type { Article, Comment, PaginationMeta } from "@/types/api"
-
-const commentsPerPage = 5
-
-const emptyCommentsMeta: PaginationMeta = {
-  page: 1,
-  perPage: commentsPerPage,
-  total: 0,
-  totalPages: 1,
-}
-
-function renderContent(content: string) {
-  return content.split("\n").map((line, index) => {
-    if (!line.trim()) {
-      return null
-    }
-
-    if (line.startsWith("## ")) {
-      return <h3 key={`${line}-${index}`}>{line.replace("## ", "")}</h3>
-    }
-
-    return <p key={`${line}-${index}`}>{line}</p>
-  })
-}
+  getReaderId,
+  hasViewedArticle,
+  markArticleAsViewed,
+  useArticleReadTracker,
+} from "@/hooks/useArticleReadTracker"
+import { getArticleImage, getArticleImageFallback } from "@/lib/format"
+import { getArticle, registerArticleView } from "@/services/articles"
+import type { Article } from "@/types/api"
 
 export function ArticleDetailPage() {
   const { id } = useParams()
   const { isAuthenticated, token } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [commentsMeta, setCommentsMeta] = useState<PaginationMeta>(emptyCommentsMeta)
-  const [commentSearch, setCommentSearch] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingComments, setIsLoadingComments] = useState(false)
-  const [isLiked, setIsLiked] = useState(false)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [commentError, setCommentError] = useState("")
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
+
+  const engagement = useArticleEngagement(id, token, isAuthenticated)
 
   useArticleReadTracker(article?.id ?? null, token)
 
@@ -105,92 +72,6 @@ export function ArticleDetailPage() {
     }
   }, [id])
 
-  useEffect(() => {
-    if (!id || !isAuthenticated || !token) {
-      setIsLiked(false)
-      setIsBookmarked(false)
-      return
-    }
-
-    let isMounted = true
-
-    Promise.allSettled([getArticleLikeStatus(id, token), getArticleBookmarkStatus(id, token)]).then(
-      ([likeResult, bookmarkResult]) => {
-        if (!isMounted) {
-          return
-        }
-
-        if (likeResult.status === "fulfilled" && likeResult.value) {
-          setIsLiked(Boolean(likeResult.value.liked))
-          setArticle((current) =>
-            current
-              ? {
-                  ...current,
-                  likesCount: likeResult.value.article.likesCount,
-                }
-              : current,
-          )
-        } else {
-          setIsLiked(false)
-        }
-
-        if (bookmarkResult.status === "fulfilled" && bookmarkResult.value) {
-          setIsBookmarked(bookmarkResult.value.bookmarked)
-          setArticle((current) =>
-            current
-              ? {
-                  ...current,
-                  bookmarksCount: bookmarkResult.value.article.bookmarksCount,
-                }
-              : current,
-          )
-        } else {
-          setIsBookmarked(false)
-        }
-      },
-    )
-
-    return () => {
-      isMounted = false
-    }
-  }, [id, isAuthenticated, token])
-
-  useEffect(() => {
-    if (!id) {
-      return
-    }
-
-    let isMounted = true
-    setIsLoadingComments(true)
-
-    listComments(id, {
-      page: 1,
-      perPage: commentsPerPage,
-      search: commentSearch.trim() || undefined,
-    })
-      .then(({ comments, meta }) => {
-        if (isMounted) {
-          setComments(comments)
-          setCommentsMeta(meta ?? emptyCommentsMeta)
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setComments([])
-          setCommentsMeta(emptyCommentsMeta)
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingComments(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [id, commentSearch])
-
   const visibleTags = useMemo(() => {
     if (!article) {
       return []
@@ -198,112 +79,6 @@ export function ArticleDetailPage() {
 
     return article.tags.length > 0 ? article.tags : ["Desenvolvimento web"]
   }, [article])
-
-  async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (!id || !token) {
-      return
-    }
-
-    const form = event.currentTarget
-    const formData = new FormData(form)
-    const content = String(formData.get("content") ?? "")
-    setCommentError("")
-    setIsSubmittingComment(true)
-
-    try {
-      const response = await createComment(id, { content }, token)
-      setComments((current) => [response.comment, ...current])
-      setCommentsMeta((current) => ({ ...current, total: current.total + 1 }))
-      form.reset()
-    } catch (error) {
-      setCommentError(getApiErrorMessage(error))
-    } finally {
-      setIsSubmittingComment(false)
-    }
-  }
-
-  async function handleLoadMoreComments() {
-    if (!id || commentsMeta.page >= commentsMeta.totalPages) {
-      return
-    }
-
-    setIsLoadingComments(true)
-
-    try {
-      const nextPage = commentsMeta.page + 1
-      const response = await listComments(id, {
-        page: nextPage,
-        perPage: commentsPerPage,
-        search: commentSearch.trim() || undefined,
-      })
-      setComments((current) => [...current, ...response.comments])
-      setCommentsMeta(response.meta ?? commentsMeta)
-    } finally {
-      setIsLoadingComments(false)
-    }
-  }
-
-  async function handleLikeToggle() {
-    if (!id || !article) {
-      return
-    }
-
-    if (!token) {
-      setCommentError("Faca login para curtir artigos.")
-      return
-    }
-
-    try {
-      const response = isLiked ? await unlikeArticle(id, token) : await likeArticle(id, token)
-      setIsLiked(Boolean(response.liked))
-      setArticle((current) =>
-        current
-          ? {
-              ...current,
-              likesCount: response.article.likesCount,
-              viewsCount: response.article.viewsCount,
-            }
-          : current,
-      )
-    } catch {
-      setCommentError("Nao foi possivel atualizar a curtida.")
-    }
-  }
-
-  async function handleBookmarkToggle() {
-    if (!id || !article) {
-      return
-    }
-
-    if (!token) {
-      setCommentError("Faca login para salvar artigos.")
-      return
-    }
-
-    try {
-      const response = isBookmarked
-        ? await unbookmarkArticle(id, token)
-        : await bookmarkArticle(id, token)
-
-      if (!response) {
-        return
-      }
-
-      setIsBookmarked(response.bookmarked)
-      setArticle((current) =>
-        current
-          ? {
-              ...current,
-              bookmarksCount: response.article.bookmarksCount,
-            }
-          : current,
-      )
-    } catch {
-      setCommentError("Nao foi possivel atualizar o artigo salvo.")
-    }
-  }
 
   if (isLoading) {
     return <StateBlock title="Carregando artigo">Preparando a leitura.</StateBlock>
@@ -313,6 +88,8 @@ export function ArticleDetailPage() {
     return <StateBlock title="Artigo nao encontrado">Volte para a listagem e tente novamente.</StateBlock>
   }
 
+  const likesCount = engagement.likesCount ?? article.likesCount
+
   return (
     <article className="detail-page">
       <Link to="/artigos" className="page-kicker">
@@ -321,50 +98,15 @@ export function ArticleDetailPage() {
       </Link>
       <div className="page-rule" />
 
-      <header className="detail-header">
-        <Badge tone="warning">{article.category ?? "Desenvolvimento web"}</Badge>
-        <h1>{article.title}</h1>
-        <p>{article.summary ?? "Explorando as tendencias e inovacoes que moldarao o futuro da tecnologia."}</p>
-        <div className="detail-author-row">
-          <Avatar name={article.author.name} url={article.author.avatarUrl} />
-          <div>
-            <strong>{article.author.name}</strong>
-            <span>{formatDate(article.publishedAt)} - {article.readingTimeMinutes ?? getReadingTime(article.content)}min</span>
-          </div>
-          <div className="detail-actions">
-            <button type="button" className={isLiked ? "detail-action liked" : "detail-action"} onClick={handleLikeToggle}>
-              <Heart size={18} />
-              <span>{article.likesCount}</span>
-            </button>
-            <button
-              type="button"
-              className={isBookmarked ? "detail-action bookmarked" : "detail-action"}
-              onClick={handleBookmarkToggle}
-              aria-label={isBookmarked ? "Remover dos salvos" : "Salvar artigo"}
-              aria-pressed={isBookmarked}
-            >
-              <Bookmark size={18} />
-            </button>
-            <button type="button" className="detail-action" onClick={() => setIsShareOpen(true)} aria-label="Compartilhar artigo">
-              <Share2 size={18} />
-            </button>
-          </div>
-        </div>
-        <div className="detail-stats">
-          <span>
-            <Heart size={16} />
-            {article.likesCount} {article.likesCount === 1 ? "curtida" : "curtidas"}
-          </span>
-          <span>
-            <Eye size={16} />
-            {article.viewsCount} {article.viewsCount === 1 ? "visualizacao" : "visualizacoes"}
-          </span>
-          <span>
-            <MessageSquare size={16} />
-            {article.commentsCount} {article.commentsCount === 1 ? "comentario" : "comentarios"}
-          </span>
-        </div>
-      </header>
+      <ArticleDetailHeader
+        article={article}
+        likesCount={likesCount}
+        isLiked={engagement.isLiked}
+        isBookmarked={engagement.isBookmarked}
+        onLikeToggle={engagement.toggleLike}
+        onBookmarkToggle={engagement.toggleBookmark}
+        onShare={() => setIsShareOpen(true)}
+      />
 
       <img
         className="detail-banner"
@@ -375,10 +117,7 @@ export function ArticleDetailPage() {
         }}
       />
 
-      <div className="article-prose">
-        <h2>{article.title}</h2>
-        {renderContent(article.content)}
-      </div>
+      <ArticleContent title={article.title} content={article.content} />
 
       <div className="tag-row">
         {visibleTags.map((tag) => (
@@ -386,50 +125,7 @@ export function ArticleDetailPage() {
         ))}
       </div>
 
-      <section className="comments-section">
-        <h2>{commentsMeta.total === 1 ? "Comentario" : "Comentarios"} ({commentsMeta.total})</h2>
-        <label className="search-box comments-search">
-          <input
-            value={commentSearch}
-            onChange={(event) => setCommentSearch(event.target.value)}
-            placeholder="Buscar comentarios..."
-          />
-        </label>
-        {isAuthenticated ? (
-          <form className="comment-box" onSubmit={handleCommentSubmit}>
-            <textarea name="content" placeholder="Otimo artigo. Esperando pelo proximo!" />
-            {commentError ? <p className="form-error">{commentError}</p> : null}
-            <button type="submit" className="button-primary" disabled={isSubmittingComment}>
-              {isSubmittingComment ? "Publicando..." : "Publicar Comentario"}
-            </button>
-          </form>
-        ) : (
-          <div className="login-comment-box">
-            <span>Faca login para comentar</span>
-            <Link to="/login" className="button-primary">
-              Fazer login
-            </Link>
-          </div>
-        )}
-        {comments.map((comment) => (
-          <article className="comment-card" key={comment.id}>
-            <Avatar name={comment.author.name} url={comment.author.avatarUrl} />
-            <div>
-              <strong>{comment.author.name}</strong>
-              <span>{formatDate(comment.createdAt)}</span>
-              <p>{comment.content}</p>
-            </div>
-            <span className="comment-like">
-              <Heart size={15} />0
-            </span>
-          </article>
-        ))}
-        {commentsMeta.page < commentsMeta.totalPages ? (
-          <button type="button" className="button-secondary comments-more" disabled={isLoadingComments} onClick={handleLoadMoreComments}>
-            {isLoadingComments ? "Carregando..." : "Carregar mais comentarios"}
-          </button>
-        ) : null}
-      </section>
+      {id ? <CommentsSection articleId={id} isAuthenticated={isAuthenticated} token={token} /> : null}
 
       <ShareModal
         open={isShareOpen}

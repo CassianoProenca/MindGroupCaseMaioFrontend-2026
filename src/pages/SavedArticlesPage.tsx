@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 import { ArticleCard } from "@/components/articles/ArticleCard"
+import { Pagination } from "@/components/ui/Pagination"
 import { StateBlock } from "@/components/ui/StateBlock"
 import { useAuth } from "@/context/AuthContext"
 import { listSavedArticles } from "@/services/articles"
@@ -78,24 +79,7 @@ export function SavedArticlesPage() {
         </div>
       ) : null}
 
-      {!isLoading && meta.totalPages > 1 ? (
-        <div className="pagination-row">
-          <button type="button" className="button-secondary" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-            Anterior
-          </button>
-          <span>
-            Pagina {meta.page} de {meta.totalPages}
-          </span>
-          <button
-            type="button"
-            className="button-secondary"
-            disabled={page >= meta.totalPages}
-            onClick={() => setPage((current) => current + 1)}
-          >
-            Proxima
-          </button>
-        </div>
-      ) : null}
+      {!isLoading ? <Pagination page={meta.page} totalPages={meta.totalPages} onChange={setPage} /> : null}
     </section>
   )
 }
