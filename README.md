@@ -4,69 +4,120 @@ Frontend em React, TypeScript e Vite para o case de estagio da Mind Group.
 
 ## Tecnologias
 
-- React
+- React 19
 - TypeScript
-- Vite
-- React Router
+- Vite 8
+- Tailwind CSS v4 (via `@tailwindcss/vite`, sem `tailwind.config`)
+- shadcn/ui + Radix UI
+- React Router v7
 - Axios
-- Zod
-- Tailwind CSS
-- lucide-react
+- Zod (validacao das respostas da API)
+- lucide-react (icones)
 
-## Como rodar
+## Requisitos
 
-1. Instale as dependencias:
+- Node.js 24 e npm
+- Backend Mind Blog API rodando (veja o repositorio do backend)
+
+## Quick start
 
 ```bash
 npm install
-```
-
-2. Copie o arquivo de ambiente:
-
-```bash
-cp .env.example .env
-```
-
-3. Garanta que o backend esteja rodando em `http://localhost:3333`.
-
-4. Inicie o frontend:
-
-```bash
 npm run dev
 ```
 
+A aplicacao sobe em `http://localhost:5173`.
+
+A URL da API ja vem configurada via `.env.example` com `VITE_API_URL=http://localhost:3333`. Se o backend rodar em outra origem, edite o `.env`:
+
+```bash
+cp .env.example .env
+# ajuste VITE_API_URL conforme necessario
+```
+
+> **Importante:** suba o backend **antes** do `npm run dev` ou as paginas que dependem de dados (listagem, dashboard) vao renderizar empty states ate o backend ficar disponivel.
+
+### Login pos-seed do backend
+
+| Campo | Valor |
+|---|---|
+| Email | `john@example.com` |
+| Senha | `123456` |
+
+## Scripts npm
+
+```bash
+npm run dev      # vite dev server
+npm run build    # tsc -b && vite build (type check faz parte do build)
+npm run preview  # serve o build pra inspecao local
+npm run lint     # eslint .
+```
+
+## Estrutura do projeto
+
+```
+src/
+  App.tsx                 # rotas + AppShell + ProtectedRoute
+  main.tsx                # bootstrap React
+  index.css               # estilos globais (Tailwind v4)
+  pages/                  # uma por rota
+  components/
+    articles/             # cards, listagem, form de upsert, modal de share
+    auth/                 # AuthCard, UserMenu
+    layout/               # AppShell, ProtectedRoute, Header
+    ui/                   # primitivos shadcn (Button, FormField, Avatar, Badge)
+  context/
+    AuthContext.tsx       # estado de auth + persistencia em localStorage
+  services/               # camada HTTP (axios + Zod no boundary)
+    api.ts                # instancia axios, parseApiResponse, normalizeAxiosError, getBannerUrl
+    auth.ts, articles.ts, profile.ts, ...
+  types/api/              # schemas Zod + tipos inferidos por dominio
+  hooks/                  # custom hooks
+  lib/                    # helpers de formatacao
+  data/                   # mocks para features ainda nao plugadas ao backend
+```
+
+Alias `@/*` -> `src/*` configurado em `vite.config.ts` e `tsconfig.json`.
+
 ## Rotas
 
-- `/` - home
-- `/artigos` - listagem de artigos com grid/lista e busca
-- `/artigos/:id` - detalhe do artigo
-- `/login` - login
-- `/cadastro` - cadastro
-- `/dashboard` - area protegida
-- `/artigos/novo` - criacao de artigo
-- `/artigos/:id/editar` - edicao de artigo
-- `/configuracoes` - tela visual de configuracoes
+| Caminho | Pagina | Auth |
+|---|---|---|
+| `/` | Home com destaque | publica |
+| `/artigos` | Listagem com busca/filtros | publica |
+| `/artigos/:id` | Detalhe do artigo | publica |
+| `/login` | Login | publica |
+| `/cadastro` | Cadastro | publica |
+| `/esqueci-minha-senha` | Solicita email de reset | publica |
+| `/resetar-senha/:token` | Define nova senha (auto-login no sucesso) | publica |
+| `/dashboard` | Metricas dos artigos do usuario | protegida |
+| `/categorias` | Gestao de categorias | protegida |
+| `/artigos/novo` | Criacao de artigo | protegida |
+| `/artigos/:id/editar` | Edicao de artigo | protegida |
+| `/configuracoes` | Perfil + tema | protegida |
+
+Rotas protegidas usam `<ProtectedRoute>`. Sem token, redirecionam para `/login` mantendo a origem em `state.from`.
 
 ## Integracao com backend
 
-Configure a URL da API em `.env`:
+Toda chamada passa por uma instancia compartilhada do `axios` (`services/api.ts`) configurada pelo `VITE_API_URL`. As respostas sao validadas com **Zod** antes de chegar nos componentes — se o backend mudar uma resposta sem atualizar o schema em `types/api/`, o service joga `ApiError("...formato inesperado.", 500)`.
 
-```bash
-VITE_API_URL=http://localhost:3333
-```
+Banners de artigo sao referenciados pelo backend como caminho relativo (`/articles/:id/banner`). O helper `getBannerUrl()` em `services/api.ts` prefixa com o `VITE_API_URL`.
 
-O frontend consome:
+### Endpoints consumidos
 
 Autenticacao
 - `POST /auth/register`
 - `POST /auth/login`
+- `POST /auth/forgot-password`
+- `POST /auth/reset-password`
 - `GET /auth/me`
 
 Artigos
 - `GET /articles`
 - `GET /articles/:id`
 - `GET /articles/:id/banner`
-- `POST /articles`
+- `POST /articles` (multipart com banner)
 - `PUT /articles/:id`
 - `DELETE /articles/:id`
 
@@ -76,11 +127,9 @@ Categorias
 - `PUT /articles/categories/:id`
 - `DELETE /articles/categories/:id`
 
-Comentarios
+Comentarios e engajamento
 - `GET /articles/:id/comments`
 - `POST /articles/:id/comments`
-
-Engajamento
 - `POST /articles/:id/view`
 - `POST /articles/:id/read`
 - `GET /articles/:id/like`
@@ -92,25 +141,22 @@ Perfil
 - `PUT /profile/me`
 - `GET /profile/me/dashboard`
 
-As respostas e payloads principais sao validados com Zod na camada de services antes de serem usados pela interface. As chamadas HTTP usam uma instancia centralizada do Axios configurada por `VITE_API_URL`.
+## Persistencia de sessao
+
+Token JWT e dados do usuario ficam em `localStorage` (`mind_blog_token`, `mind_blog_user`). Ao carregar, o `AuthProvider` revalida o token chamando `/auth/me` — se falhar, limpa a sessao automaticamente.
 
 ## Observacoes
 
-Todos os recursos exibidos pela interface (artigos, comentarios, curtidas, visualizacoes, tags, categorias, perfil e metricas do dashboard) consomem dados reais do backend. Quando a API esta indisponivel, as paginas mostram empty states em vez de dados ficticios.
+- Todas as strings de UI estao em portugues.
+- Estilos vivem no `index.css` (Tailwind v4 + variaveis CSS). Nao ha `tailwind.config`.
+- O fluxo de recuperacao de senha esta totalmente ligado ao backend (envio de email via Gmail SMTP). Apos definir a nova senha, o frontend ja autentica o usuario e redireciona para `/dashboard`.
 
 ## Cobertura dos requisitos do case
 
-- Frontend em React com TypeScript: completo.
-- Backend em Node.js, Express e TypeScript: completo no repositorio backend.
-- Banco MySQL: completo no repositorio backend via Docker Compose.
-- ORM Prisma: completo no repositorio backend.
-- Cadastro e login de usuarios: completo.
-- Usuario com nome, email e senha: completo.
-- Senhas criptografadas com bcrypt: completo no backend.
-- Artigos com titulo, conteudo, autor, data de publicacao, data de alteracao e banner: completo.
-- Criacao, edicao e remocao protegidas por login: completo.
-- Banner salvo como BLOB: completo no backend, consumido pelo endpoint `/articles/:id/banner`.
-- Dump SQL: completo no repositorio backend.
-- Repositorios e commits organizados: completo localmente.
+- Frontend em React + TypeScript: completo.
+- Cadastro e login: completo.
+- Rotas protegidas com persistencia de sessao: completo.
+- CRUD de artigos com upload de banner: completo.
+- Validacao client-side e server-side (Zod nas duas pontas): completo.
 
-Recursos extras ja entregues alem do minimo: categorias, comentarios, curtidas, registro de visualizacoes e tempo de leitura, perfil de usuario com bio/avatar e dashboard com metricas reais por artigo.
+Recursos extras: categorias, comentarios, curtidas, registro de visualizacoes e tempo de leitura, perfil com bio/avatar, dashboard com metricas reais por artigo e fluxo de **recuperacao de senha por email com auto-login no reset**.
