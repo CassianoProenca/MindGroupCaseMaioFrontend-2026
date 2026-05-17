@@ -1335,24 +1335,23 @@
   gap: 6px;
 }
 
-.comments-more,
-.recent-activity-more {
+.comments-more {
   width: 100%;
   margin-top: 18px;
 }
 
-.recent-activity-more {
-  margin: 0 24px 24px;
-  width: calc(100% - 48px);
-}
-
 .recent-activity-body {
-  flex: 1 1 auto;
-  min-height: 240px;
+  height: 540px;
   overflow-y: auto;
-  margin-bottom: 18px;
   scrollbar-color: var(--line) transparent;
   scrollbar-width: thin;
+}
+
+.recent-activity-loading {
+  padding: 18px 24px;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
 }
 
 .recent-activity-body::-webkit-scrollbar {
@@ -1417,13 +1416,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(310px, 0.75fr);
   gap: 38px;
-  align-items: stretch;
-}
-
-.dashboard-grid > .recent-activity {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  align-items: start;
 }
 
 .dashboard-list-panel h2,

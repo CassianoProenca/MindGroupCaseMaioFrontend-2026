@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type UIEvent } from "react"
 import { Edit3, FileText, FolderTree, Heart, MessageSquare, Plus, Settings, Trash2, TrendingUp } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -101,6 +101,14 @@ export function DashboardPage() {
       setActivityPage(nextPage)
     } finally {
       setIsLoadingActivity(false)
+    }
+  }
+
+  function handleActivityScroll(event: UIEvent<HTMLDivElement>) {
+    const target = event.currentTarget
+    const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+    if (distanceToBottom < 100) {
+      handleLoadMoreActivity()
     }
   }
 
@@ -255,7 +263,7 @@ export function DashboardPage() {
 
         <aside className="surface-panel recent-activity">
           <h2>Atividade Recente</h2>
-          <div className="recent-activity-body">
+          <div className="recent-activity-body" onScroll={handleActivityScroll}>
             {isLoadingActivity && activity.length === 0 ? <StateBlock title="Carregando atividade" /> : null}
             {!isLoadingActivity && activity.length === 0 ? <StateBlock title="Nenhuma atividade ainda" /> : null}
             {activity.map((item) => (
@@ -267,17 +275,13 @@ export function DashboardPage() {
                 </p>
               </article>
             ))}
+            {isLoadingActivity && activity.length > 0 ? (
+              <div className="recent-activity-loading">Carregando...</div>
+            ) : null}
+            {!isLoadingActivity && activity.length > 0 && activity.length >= activityTotal ? (
+              <div className="recent-activity-loading">Sem mais atividades.</div>
+            ) : null}
           </div>
-          {activity.length < activityTotal ? (
-            <button
-              type="button"
-              className="button-secondary recent-activity-more"
-              disabled={isLoadingActivity}
-              onClick={handleLoadMoreActivity}
-            >
-              {isLoadingActivity ? "Carregando..." : "Carregar mais"}
-            </button>
-          ) : null}
         </aside>
       </div>
 
