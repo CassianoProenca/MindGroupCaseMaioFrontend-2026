@@ -2,6 +2,8 @@
 
 Frontend em React, TypeScript e Vite para o case de estagio da Mind Group.
 
+> Backend do projeto: https://github.com/CassianoProenca/MindGroupCaseMaioBackend-2026
+
 ## Tecnologias
 
 - React 19
@@ -13,6 +15,21 @@ Frontend em React, TypeScript e Vite para o case de estagio da Mind Group.
 - Axios
 - Zod (validacao das respostas da API)
 - lucide-react (icones)
+- Vitest + @testing-library/react + jsdom para testes
+
+## Sumario
+
+- [Requisitos](#requisitos)
+- [Quick start](#quick-start)
+- [Login pos-seed do backend](#login-pos-seed-do-backend)
+- [Scripts npm](#scripts-npm)
+- [Testes](#testes)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Rotas](#rotas)
+- [Integracao com backend](#integracao-com-backend)
+- [Persistencia de sessao](#persistencia-de-sessao)
+- [Features de UX](#features-de-ux)
+- [Cobertura dos requisitos do case](#cobertura-dos-requisitos-do-case)
 
 ## Requisitos
 
@@ -21,21 +38,23 @@ Frontend em React, TypeScript e Vite para o case de estagio da Mind Group.
 
 ## Quick start
 
-```bash
-npm install
-npm run dev
-```
+Ordem recomendada:
+
+1. **Suba o backend primeiro** (veja o README do repositorio do backend).
+2. Copie o `.env.example` para `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+   A URL da API ja vem com `VITE_API_URL=http://localhost:3333`. Ajuste se o backend rodar em outra origem.
+3. Instale dependencias e suba o dev server:
+   ```bash
+   npm install
+   npm run dev
+   ```
 
 A aplicacao sobe em `http://localhost:5173`.
 
-A URL da API ja vem configurada via `.env.example` com `VITE_API_URL=http://localhost:3333`. Se o backend rodar em outra origem, edite o `.env`:
-
-```bash
-cp .env.example .env
-# ajuste VITE_API_URL conforme necessario
-```
-
-> **Importante:** suba o backend **antes** do `npm run dev` ou as paginas que dependem de dados (listagem, dashboard) vao renderizar empty states ate o backend ficar disponivel.
+> **Importante:** se o backend nao estiver rodando, as paginas que dependem de dados (listagem, dashboard) vao renderizar empty states ate ele ficar disponivel.
 
 ### Login pos-seed do backend
 
@@ -47,10 +66,28 @@ cp .env.example .env
 ## Scripts npm
 
 ```bash
-npm run dev      # vite dev server
-npm run build    # tsc -b && vite build (type check faz parte do build)
-npm run preview  # serve o build pra inspecao local
-npm run lint     # eslint .
+npm run dev            # vite dev server
+npm run build          # tsc -b && vite build (type check faz parte do build)
+npm run preview        # serve o build pra inspecao local
+npm run lint           # eslint .
+npm test               # roda toda a suite Vitest
+npm run test:watch     # modo watch
+npm run test:coverage  # relatorio de cobertura
+```
+
+## Testes
+
+A suite usa **Vitest** + **@testing-library/react** + **jsdom**. Cobertura atual:
+
+- `src/context/__tests__/AuthContext.test.tsx` — login, logout, hidratacao do user a partir do token e revalidacao em background via `/auth/me`.
+- `src/components/__tests__/ProtectedRoute.test.tsx` — redirecionamento de rotas protegidas e preservacao da origem em `state.from`.
+- `src/components/__tests__/` — primitivos: `ArticleCard`, `Avatar`, `Badge`, `FormField`, `Pagination`, `StateBlock`.
+- `src/services/__tests__/api.test.ts` — `parseApiResponse` (validacao Zod no boundary) e `normalizeAxiosError`.
+
+```bash
+npm test                 # roda tudo uma vez
+npm run test:watch       # re-roda ao salvar
+npm run test:coverage    # gera relatorio em coverage/
 ```
 
 ## Estrutura do projeto
@@ -72,9 +109,9 @@ src/
     api.ts                # instancia axios, parseApiResponse, normalizeAxiosError, getBannerUrl
     auth.ts, articles.ts, profile.ts, ...
   types/api/              # schemas Zod + tipos inferidos por dominio
-  hooks/                  # custom hooks
+  hooks/                  # useArticles, useArticleComments, useArticleEngagement, useArticleReadTracker
   lib/                    # helpers de formatacao
-  data/                   # mocks para features ainda nao plugadas ao backend
+  test/                   # setup do Vitest
 ```
 
 Alias `@/*` -> `src/*` configurado em `vite.config.ts` e `tsconfig.json`.
@@ -144,6 +181,14 @@ Perfil
 ## Persistencia de sessao
 
 Apenas o token JWT fica em `localStorage` (`mind_blog_token`). O payload do token carrega o user publico (id, name, email, bio, avatarUrl, role), entao o `AuthProvider` deriva o usuario decodificando o token no boot e revalida em background chamando `/auth/me` — se falhar, limpa a sessao automaticamente. Apos editar o perfil, o backend devolve um token novo com os dados atualizados.
+
+## Features de UX
+
+- **Tema claro/escuro persistente** via `ThemeContext` (`src/context/ThemeContext.tsx`). O toggle fica no header; preferencia inicial respeita `prefers-color-scheme` e e gravada em `localStorage`.
+- **Auto-login apos reset de senha:** o endpoint `POST /auth/reset-password` retorna o token ja na resposta, entao apos definir a nova senha o usuario e redirecionado diretamente para `/dashboard`.
+- **Busca client-side com debounce** na listagem de artigos e categorias, evitando refetch a cada tecla.
+- **Persistencia de sessao por JWT** com hidratacao otimista (decodifica o token no boot) e revalidacao em background via `/auth/me`.
+- **Empty states e error boundaries** dedicados em cada pagina, sem telas brancas.
 
 ## Observacoes
 
