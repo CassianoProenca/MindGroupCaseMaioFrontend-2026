@@ -26,7 +26,7 @@ export function AuthCard({ mode, error, isSubmitting, onSubmit }: AuthCardProps)
           placeholder="********"
           required
           minLength={6}
-          action={isLogin ? <Link to="/login">Esqueceu a senha?</Link> : null}
+          action={isLogin ? <Link to="/esqueci-minha-senha">Esqueceu a senha?</Link> : null}
         />
         {!isLogin ? (
           <TextInput

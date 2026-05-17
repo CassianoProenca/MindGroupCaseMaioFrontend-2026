@@ -14,6 +14,7 @@ type AuthContextValue = {
   isLoading: boolean
   login: (payload: authService.LoginPayload) => Promise<void>
   register: (payload: authService.RegisterPayload) => Promise<void>
+  resetPassword: (payload: authService.ResetPasswordPayload) => Promise<void>
   logout: () => void
   updateUser: (nextUser: User) => void
 }
@@ -78,6 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       register: async (payload) => {
         const response = await authService.register(payload)
+        persistSession(response.token, response.user)
+      },
+      resetPassword: async (payload) => {
+        const response = await authService.resetPassword(payload)
         persistSession(response.token, response.user)
       },
       logout: () => {

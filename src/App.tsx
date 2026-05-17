@@ -7,7 +7,9 @@ import { ArticlesPage } from "@/pages/ArticlesPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { CategoriesPage } from "@/pages/CategoriesPage"
 import { DashboardPage } from "@/pages/DashboardPage"
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage"
 import { HomePage } from "@/pages/HomePage"
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage"
 import { SettingsPage } from "@/pages/SettingsPage"
 import { UpsertArticlePage } from "@/pages/UpsertArticlePage"
 
@@ -20,6 +22,8 @@ function App() {
         <Route path="artigos/:id" element={<ArticleDetailPage />} />
         <Route path="login" element={<AuthPage mode="login" />} />
         <Route path="cadastro" element={<AuthPage mode="register" />} />
+        <Route path="esqueci-minha-senha" element={<ForgotPasswordPage />} />
+        <Route path="resetar-senha/:token" element={<ResetPasswordPage />} />
         <Route
           path="dashboard"
           element={

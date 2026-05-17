@@ -18,6 +18,11 @@ export const meResponseSchema = z.object({
   user: userSchema,
 })
 
+export const messageResponseSchema = z.object({
+  message: z.string(),
+})
+
 export type User = z.infer<typeof userSchema>
 export type AuthResponse = z.infer<typeof authResponseSchema>
 export type MeResponse = z.infer<typeof meResponseSchema>
+export type MessageResponse = z.infer<typeof messageResponseSchema>

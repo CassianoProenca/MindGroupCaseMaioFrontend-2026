@@ -28,8 +28,19 @@ export const profilePayloadSchema = z.object({
   avatarUrl: z.string().trim().url("URL de avatar invalida.").optional().or(z.literal("")),
 })
 
+export const forgotPasswordPayloadSchema = z.object({
+  email: z.string().trim().email("Informe um email valido.").toLowerCase(),
+})
+
+export const resetPasswordPayloadSchema = z.object({
+  token: z.string().min(1, "Token obrigatorio."),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres."),
+})
+
 export type LoginPayload = z.infer<typeof loginPayloadSchema>
 export type RegisterPayload = z.infer<typeof registerPayloadSchema>
 export type ArticlePayload = z.infer<typeof articlePayloadSchema>
 export type CommentPayload = z.infer<typeof commentPayloadSchema>
 export type ProfilePayload = z.infer<typeof profilePayloadSchema>
+export type ForgotPasswordPayload = z.infer<typeof forgotPasswordPayloadSchema>
+export type ResetPasswordPayload = z.infer<typeof resetPasswordPayloadSchema>
