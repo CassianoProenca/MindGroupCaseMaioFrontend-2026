@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { ArrowLeft, Eye, Heart, MessageSquare, Share2 } from "lucide-react"
+import { ArrowLeft, Bookmark, Eye, Heart, MessageSquare, Share2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
 import { ShareModal } from "@/components/articles/ShareModal"
@@ -12,12 +12,15 @@ import { getReaderId, hasViewedArticle, markArticleAsViewed, useArticleReadTrack
 import { formatDate, getArticleImage, getArticleImageFallback, getReadingTime } from "@/lib/format"
 import { getApiErrorMessage } from "@/services/api"
 import {
+  bookmarkArticle,
   createComment,
   getArticle,
+  getArticleBookmarkStatus,
   getArticleLikeStatus,
   likeArticle,
   listComments,
   registerArticleView,
+  unbookmarkArticle,
   unlikeArticle,
 } from "@/services/articles"
 import type { Article, Comment, PaginationMeta } from "@/types/api"
@@ -55,6 +58,7 @@ export function ArticleDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingComments, setIsLoadingComments] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
   const [commentError, setCommentError] = useState("")
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
@@ -104,30 +108,47 @@ export function ArticleDetailPage() {
   useEffect(() => {
     if (!id || !isAuthenticated || !token) {
       setIsLiked(false)
+      setIsBookmarked(false)
       return
     }
 
     let isMounted = true
 
-    getArticleLikeStatus(id, token)
-      .then((response) => {
-        if (isMounted) {
-          setIsLiked(Boolean(response.liked))
+    Promise.allSettled([getArticleLikeStatus(id, token), getArticleBookmarkStatus(id, token)]).then(
+      ([likeResult, bookmarkResult]) => {
+        if (!isMounted) {
+          return
+        }
+
+        if (likeResult.status === "fulfilled" && likeResult.value) {
+          setIsLiked(Boolean(likeResult.value.liked))
           setArticle((current) =>
             current
               ? {
                   ...current,
-                  likesCount: response.article.likesCount,
+                  likesCount: likeResult.value.article.likesCount,
                 }
               : current,
           )
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
+        } else {
           setIsLiked(false)
         }
-      })
+
+        if (bookmarkResult.status === "fulfilled" && bookmarkResult.value) {
+          setIsBookmarked(bookmarkResult.value.bookmarked)
+          setArticle((current) =>
+            current
+              ? {
+                  ...current,
+                  bookmarksCount: bookmarkResult.value.article.bookmarksCount,
+                }
+              : current,
+          )
+        } else {
+          setIsBookmarked(false)
+        }
+      },
+    )
 
     return () => {
       isMounted = false
@@ -251,6 +272,39 @@ export function ArticleDetailPage() {
     }
   }
 
+  async function handleBookmarkToggle() {
+    if (!id || !article) {
+      return
+    }
+
+    if (!token) {
+      setCommentError("Faca login para salvar artigos.")
+      return
+    }
+
+    try {
+      const response = isBookmarked
+        ? await unbookmarkArticle(id, token)
+        : await bookmarkArticle(id, token)
+
+      if (!response) {
+        return
+      }
+
+      setIsBookmarked(response.bookmarked)
+      setArticle((current) =>
+        current
+          ? {
+              ...current,
+              bookmarksCount: response.article.bookmarksCount,
+            }
+          : current,
+      )
+    } catch {
+      setCommentError("Nao foi possivel atualizar o artigo salvo.")
+    }
+  }
+
   if (isLoading) {
     return <StateBlock title="Carregando artigo">Preparando a leitura.</StateBlock>
   }
@@ -281,6 +335,15 @@ export function ArticleDetailPage() {
             <button type="button" className={isLiked ? "detail-action liked" : "detail-action"} onClick={handleLikeToggle}>
               <Heart size={18} />
               <span>{article.likesCount}</span>
+            </button>
+            <button
+              type="button"
+              className={isBookmarked ? "detail-action bookmarked" : "detail-action"}
+              onClick={handleBookmarkToggle}
+              aria-label={isBookmarked ? "Remover dos salvos" : "Salvar artigo"}
+              aria-pressed={isBookmarked}
+            >
+              <Bookmark size={18} />
             </button>
             <button type="button" className="detail-action" onClick={() => setIsShareOpen(true)} aria-label="Compartilhar artigo">
               <Share2 size={18} />

@@ -5,6 +5,7 @@ import {
   categoriesResponseSchema,
   categoryResponseSchema,
   engagementResponseSchema,
+  bookmarkStatusSchema,
   articlePayloadSchema,
   articleResponseSchema,
   articlesResponseSchema,
@@ -202,6 +203,42 @@ export async function unlikeArticle(articleId: string | number, token: string) {
   try {
     const response = await api.delete(`/articles/${articleId}/like`, authConfig(token))
     return parseApiResponse(engagementResponseSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function getArticleBookmarkStatus(articleId: string | number, token: string) {
+  try {
+    const response = await api.get(`/articles/${articleId}/bookmark`, authConfig(token))
+    return parseApiResponse(bookmarkStatusSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function bookmarkArticle(articleId: string | number, token: string) {
+  try {
+    const response = await api.post(`/articles/${articleId}/bookmark`, undefined, authConfig(token))
+    return parseApiResponse(bookmarkStatusSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function unbookmarkArticle(articleId: string | number, token: string) {
+  try {
+    const response = await api.delete(`/articles/${articleId}/bookmark`, authConfig(token))
+    return parseApiResponse(bookmarkStatusSchema, response.data)
+  } catch (error) {
+    normalizeAxiosError(error)
+  }
+}
+
+export async function listSavedArticles(token: string, params: ListArticlesParams = {}) {
+  try {
+    const response = await api.get("/articles/saved", { ...authConfig(token), params })
+    return parseApiResponse(articlesResponseSchema, response.data)
   } catch (error) {
     normalizeAxiosError(error)
   }

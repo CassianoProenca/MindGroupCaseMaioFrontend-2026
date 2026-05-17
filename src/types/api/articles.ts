@@ -13,6 +13,7 @@ export const articleSchema = z.object({
   bannerUrl: z.string().nullable(),
   viewsCount: z.number().optional().default(0),
   likesCount: z.number().optional().default(0),
+  bookmarksCount: z.number().optional().default(0),
   commentsCount: z.number().optional().default(0),
   readingTimeMinutes: z.number().optional(),
   publishedAt: z.string(),

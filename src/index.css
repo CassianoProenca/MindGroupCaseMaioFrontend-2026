@@ -1235,6 +1235,14 @@
   color: var(--cyan);
 }
 
+.detail-action.bookmarked {
+  color: var(--cyan);
+}
+
+.detail-action.bookmarked svg {
+  fill: currentColor;
+}
+
 .share-network-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));

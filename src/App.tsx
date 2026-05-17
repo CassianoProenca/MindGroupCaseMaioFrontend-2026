@@ -10,6 +10,7 @@ import { DashboardPage } from "@/pages/DashboardPage"
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage"
 import { HomePage } from "@/pages/HomePage"
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage"
+import { SavedArticlesPage } from "@/pages/SavedArticlesPage"
 import { SettingsPage } from "@/pages/SettingsPage"
 import { UpsertArticlePage } from "@/pages/UpsertArticlePage"
 
@@ -61,6 +62,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="salvos"
+          element={
+            <ProtectedRoute>
+              <SavedArticlesPage />
             </ProtectedRoute>
           }
         />

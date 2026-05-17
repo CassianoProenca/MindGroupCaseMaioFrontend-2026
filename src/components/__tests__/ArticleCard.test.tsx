@@ -16,6 +16,7 @@ function makeArticle(overrides: Partial<Article> = {}): Article {
     bannerUrl: null,
     viewsCount: 12,
     likesCount: 3,
+    bookmarksCount: 0,
     commentsCount: 2,
     readingTimeMinutes: 3,
     publishedAt: "2026-05-17T10:00:00Z",

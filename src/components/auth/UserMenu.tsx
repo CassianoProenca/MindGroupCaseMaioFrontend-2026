@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { ChevronDown, FolderTree, LayoutDashboard, LogOut, Settings } from "lucide-react"
+import { Bookmark, ChevronDown, FolderTree, LayoutDashboard, LogOut, Settings } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { Avatar } from "@/components/ui/Avatar"
@@ -68,6 +68,10 @@ export function UserMenu() {
         <Link to="/dashboard" role="menuitem" onClick={close}>
           <LayoutDashboard size={16} />
           Dashboard
+        </Link>
+        <Link to="/salvos" role="menuitem" onClick={close}>
+          <Bookmark size={16} />
+          Salvos
         </Link>
         <Link to="/categorias" role="menuitem" onClick={close}>
           <FolderTree size={16} />

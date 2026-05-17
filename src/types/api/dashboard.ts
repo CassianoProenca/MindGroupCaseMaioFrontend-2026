@@ -39,11 +39,23 @@ export const engagementResponseSchema = z.object({
     id: z.number(),
     viewsCount: z.number(),
     likesCount: z.number(),
+    bookmarksCount: z.number().optional().default(0),
   }),
   liked: z.boolean().optional(),
+})
+
+export const bookmarkStatusSchema = z.object({
+  article: z.object({
+    id: z.number(),
+    viewsCount: z.number(),
+    likesCount: z.number(),
+    bookmarksCount: z.number(),
+  }),
+  bookmarked: z.boolean(),
 })
 
 export type DashboardMetricsResponse = z.infer<typeof dashboardMetricsSchema>
 export type RecentActivity = z.infer<typeof recentActivitySchema>
 export type RecentActivityResponse = z.infer<typeof recentActivityResponseSchema>
 export type EngagementResponse = z.infer<typeof engagementResponseSchema>
+export type BookmarkStatus = z.infer<typeof bookmarkStatusSchema>
